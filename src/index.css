@@ -1,0 +1,382 @@
+body {
+  font: 14px "Century Gothic", Futura, sans-serif;
+  margin: 0px;
+  padding: 0px;
+}
+
+ol, ul {
+  padding-left: 30px;
+}
+
+.resource {
+  width: 21px;
+  height: 21px;
+  margin: 1px;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.resource.selected {
+  border: solid 10px red;
+}
+
+.resource-Y {
+  background-image: url('img/cube-yellow.png');
+}
+
+.resource-R {
+  background-image: url('img/cube-red.png');
+}
+
+.resource-G {
+  background-image: url('img/cube-green.png');
+}
+
+.resource-B {
+  background-image: url('img/cube-brown.png');
+}
+
+.resource-any {
+  background-image: url('img/cube-any.png');
+}
+
+.coin {
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.coin.silver {
+  background-image: url('img/coin-silver.png');
+}
+
+.coin.gold {
+  background-image: url('img/coin-gold.png');
+}
+
+.resource-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.card {
+  position: relative;
+  min-width: 168px;
+  min-height: 288px;
+  max-width: 168px;
+  max-height: 288px;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.card.selected {
+  border: solid 10px red;
+}
+
+.card-type-production {
+  background-image: url('img/resource-card-production.png');
+}
+
+.card-type-trading {
+  background-image: url('img/resource-card-trading.png');
+}
+
+.card-type-upgrade {
+  background-image: url('img/resource-card-upgrade.png');
+}
+
+.card-type-victory {
+  background-image: url('img/resource-card-victory.png');
+}
+
+.card-type-production .production-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  left: 15px;
+  top: 10px;
+  width: 27px;
+}
+
+.card-type-production .production-arrow-tip {
+  background-image: url('img/production-arrow-tip.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 27px;
+  height: 20px;
+}
+
+.card-type-production .production-arrow {
+  display: flex;
+  flex-direction: column;
+  width: 28px;
+  min-height: 45px;
+  background-image: url('img/production-arrow.png');
+  background-repeat: repeat;
+  background-size: 100%;
+}
+
+.card-type-production .resource-recipe {
+  margin-left: 2px;
+  margin-top: 1px;
+}
+
+.card-type-upgrade .upgrade-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  left: 17px;
+  top: 12px;
+  width: 28px;
+}
+
+.card-type-upgrade .upgrade-arrow-top {
+  background-image: url('img/upgrade-arrow-top.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 28px;
+  height: 25px;
+}
+
+.card-type-upgrade .upgrade-arrow-tip {
+  background-image: url('img/upgrade-arrow-tip.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 28px;
+  height: 20px;
+}
+
+.card-type-upgrade .upgrade-arrow {
+  display: flex;
+  flex-direction: column;
+  width: 28px;
+  min-height: 50px;
+  background-image: url('img/upgrade-arrow.png');
+  background-repeat: repeat;
+  background-size: 100%;
+}
+
+.card-type-upgrade .upgrade-cubes {
+  margin-left: 2px;
+  margin-top: 1px;
+}
+
+.card-type-trading .trading-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  left: 16px;
+  top: 12px;
+  width: 27px;
+}
+
+
+.card-type-trading .trading-inside-arrow {
+  background-image: url('img/trading-inside-arrow.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 27px;
+  height: 20px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.card-type-trading .trading-arrow-tip {
+  background-image: url('img/trading-arrow-tip.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  width: 28px;
+  height: 20px;
+}
+
+.card-type-trading .trading-arrow {
+  display: flex;
+  flex-direction: column;
+  width: 28px;
+  min-height: 48px;
+  background-image: url('img/trading-arrow.png');
+  background-repeat: repeat;
+  background-size: 100%;
+}
+
+.card-type-trading .resource-recipe {
+  margin-left: 2px;
+  margin-top: 1px;
+}
+
+.card .coin {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+}
+
+.victory-board .card-list {
+  display: flex;
+  flex-direction: row;
+}
+
+.victory-board .card .points {
+  position: absolute;
+  bottom: 40px;
+  color: white;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  font-size: 38pt;
+}
+
+.victory-board .card .resource-recipe {
+  position: absolute;
+  bottom: 13px;
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.resources-board .card-list {
+  display: flex;
+  flex-direction: row;
+}
+
+.resources-board .card-slot {
+  position: relative;
+}
+
+.resources-board .bonus-resources .resource-recipe {
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  position: absolute;
+  top: 30px;
+  right: 40px;
+}
+
+.resources-board .bonus-resources .resource {
+  width: 32px;
+  height: 32px;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.player {
+  /* Add shadows to create the "card" effect */
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  border-radius: 5px;
+  transition: 0.3s;
+  padding: 0px;
+  margin-bottom: 10px;
+  width: 250px;
+  padding: 4px;
+  background-color: rgba(0.5,0.5,0.5,0.08);
+}
+
+.player.selected {
+  background-color: white;
+  border: solid 2px gold;
+  box-shadow: 0 4px 8px 0 gold;
+  padding: 2px;
+}
+
+.player .resource {
+  width: 32px;
+  height: 32px;
+}
+
+.player .header {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+}
+
+.player .name {
+  flex: 50%;
+  vertical-align: center;
+  margin-left: 10px;
+  padding-top: 20px;
+  text-align: left;
+  font-size: 16pt;
+  font-weight: bold;
+}
+
+.player-vp {
+  display: flex;
+  flex-direction: row;
+  margin: 5px;
+  position: relative;
+}
+
+.player-vp .vp-cards {
+  width: 40px;
+  height: 40px;
+  background-image: url('img/resource-card-victory.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+.player-vp .coin {
+  width: 40px;
+  height: 40px;
+}
+
+.player .player-resources {
+  margin-left: 10px;
+}
+
+.player-hand {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.player-vp .score {
+  position: absolute;
+  bottom: -25px;
+  color: black;
+  width: inherit;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16pt;
+}
+
+.player-score {
+  border: solid 2px black;
+  margin: 10px;
+}
+
+.player-score.winner {
+  background-color: gold;
+}
+
+#game {
+  display: flex;
+  flex-direction: row;
+}
+
+#panel{
+  margin: 20px;
+}
+
+#game-logo {
+  margin-bottom: 20px;
+  width: 100%;
+  height: 200px;
+  background-image: url('img/box-art.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+}
+
+#action-bar {
+  display: flex;
+  flex-direction: center;
+}
+
+#game-board {}
