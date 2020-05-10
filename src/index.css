@@ -418,11 +418,14 @@ ol, ul {
   left: 50%;
   top: 10px;
   transform: translateX(-50%);
-  background-color: rgba(255, 0, 0, 0.5);
+  background-color: rgba(255, 0, 0, 1);
   border: solid 1px red;
+  border-radius: 5px;
+  font-size: 12pt;
   color: white;
   display: none;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  z-index: 1000;
 }
 
 #error.active {
@@ -462,7 +465,51 @@ ol, ul {
 
 #action-bar {
   display: flex;
-  flex-direction: center;
+  flex-direction: column;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  border-radius: 5px;
+  padding: 10px;
+}
+
+#action-bar .last-turn-message {
+  font-size: 24pt;
+  color: red;
+  font-weight: bold;
+  display:none;
+}
+
+#action-bar .last-turn-message.active {
+  display: block;
+}
+
+#action-bar .action-content {
+  display: flex;
+  flex-direction: row;
+}
+
+#action-bar .action-button {
+  margin-left: 10px;
+  min-width: 50px;
+  height: 20px;
+  text-align: center;
+  vertical-align: middle;
+  color: white;
+  background-color: #008CBA;
+  font-size: 11pt;
+  padding: 8px;
+  border-radius: 8px;
+  opacity: 0.9;
+}
+
+#action-bar .action-button:hover {
+  opacity: 1.0;
+}
+
+#action-bar .message {
+  line-height: 35px;
 }
 
 #game-board {}

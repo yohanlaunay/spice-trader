@@ -328,18 +328,29 @@ function Players(props){
 }
 
 function ActionBar(props){
+
+  const [lastKnownAction, setLastKnownAction] = React.useState(null);
+  const currentAction = props.currentAction;
+  const shouldScrollToTop = currentAction !== lastKnownAction;
+  React.useEffect(() => {
+    if( shouldScrollToTop ){
+     window.scrollTo(0, 0)
+     setLastKnownAction(currentAction);
+    }
+  }, [shouldScrollToTop,currentAction,setLastKnownAction]);
+
+
   // TODO render non-active player
   function renderInitState(){
     const canRest = GameEngine.getActivePlayer(props.gameState.game).discardPile.length > 0;
     return (
-      <div className="action-bar">
-        Select an action:<br />
-        - Claim a Victory Card<br />
-        - Buy a Resource Card<br />
-        - Use a Resource Card< br />
+      <div className="action-content">
+        <div className='message'>
+          <b>Claim</b> a Victory Card OR <b>Buy</b> a Resource Card OR <b>Use</b> a Resource Card
+        </div>
         {canRest?
-          <button onClick={props.onPlayerRests}>Rest</button>
-          :<br />}
+          <div className='action-button' onClick={props.onPlayerRests}>Rest</div>
+          :<div />}
       </div>
     );
   }
@@ -347,16 +358,20 @@ function ActionBar(props){
     const activePlayer = GameEngine.getActivePlayer(props.gameState.game);
     const resourcesToDiscard = activePlayer.resources.length - PlayerMaxResources;
     return (
-        <div className="action-bar">
-        You need to discard {resourcesToDiscard} resources. <br />
+      <div className="action-content">
+          <div className='message'>
+            You need to <b>Discard {resourcesToDiscard}</b> resources
+          </div>
       </div>
     );
   }
   function renderSelectResourceUpgradeState(){
     return (
-        <div className="action-bar">
-        You can do up to {props.gameState.currentActionData.numUpgradesRemaining} resource upgrades. Select which resource to upgrade. <br />
-        <button onClick={props.onPlayerPass}>Pass</button>
+      <div className="action-content">
+          <div className='message'>
+            You can do up to <b>{props.gameState.currentActionData.numUpgradesRemaining} resource</b> upgrades
+          </div>
+          <div className='action-button' onClick={props.onPlayerPass}>Pass</div>
       </div>
     );
   }
@@ -370,27 +385,45 @@ function ActionBar(props){
     }
     const numResourcesToSelect = Math.abs(props.gameState.currentActionData.numResourcesForPayment - numResourcesSelected);
     return (
-        <div className="action-bar">
-        You need to select {numResourcesToSelect} resource(s) to pay for the cards before the selected one. <br />
-        <button onClick={props.onCancelPlayerAction}>Cancel</button>
+      <div className="action-content">
+          <div className='message'>
+            You need to select <b>{numResourcesToSelect} resource(s)</b> to pay for the cards before the selected one
+          </div>
+          <div className='action-button' onClick={props.onCancelPlayerAction}>Cancel</div>
       </div>
     );
   }
 
-  if( props.currentAction === null ){
-    return renderInitState();
+  function renderActionContent(){
+    if( currentAction === null ){
+      return renderInitState();
+    }
+
+    switch( currentAction ){
+      case GameActions.DiscardResources:
+        return renderDiscardResourcesState();
+      case GameActions.SelectResourceUpgrade:
+        return renderSelectResourceUpgradeState();
+      case GameActions.PayResourceCard:
+        return renderPayResourceCardState();
+      default:
+        return <div />; // should not happen
+    }
   }
 
-  switch( props.currentAction ){
-    case GameActions.DiscardResources:
-      return renderDiscardResourcesState();
-    case GameActions.SelectResourceUpgrade:
-      return renderSelectResourceUpgradeState();
-    case GameActions.PayResourceCard:
-      return renderPayResourceCardState();
-    default:
-      return <div />; // should not happen
+  const lastTurnClassNames = ['last-turn-message'];
+  if( props.gameState.lastTurnStartingPlayer !== null ){
+    lastTurnClassNames.push('active');
+  }else{
+    lastTurnClassNames.push('inactive');
   }
+
+  return (
+    <div id='action-bar'>
+      <div className={lastTurnClassNames.join(' ')}>Last Turn</div>
+      {renderActionContent()}
+    </div>
+  );
 }
 
 function PlayerScore(props){
@@ -517,6 +550,11 @@ class Game extends React.Component {
     this.dismissError = this.dismissError.bind(this);
   }
 
+  updateState(newState){
+    // TODO firebase update
+    this.setState(newState);
+  }
+
   copyState(state){
     const newState = GameEngine.copy(state||this.state);
     newState.error = null;
@@ -532,7 +570,7 @@ class Game extends React.Component {
     }
     const newState = this.copyState();
     newState.error = null;
-    this.setState(newState);
+    this.updateState(newState);
   }
 
   showError(errorMessage){
@@ -541,7 +579,7 @@ class Game extends React.Component {
       uid: GameEngine.guid(),
       message: errorMessage,
     };
-    this.setState(newState);
+    this.updateState(newState);
   }
 
   createLog(state, player, action, isVpCard=false){
@@ -603,7 +641,7 @@ class Game extends React.Component {
         numResourcesForPayment: selectedCardIndex,
       };
       newState.currentAction = GameActions.PayResourceCard;
-      this.setState(newState);
+      this.updateState(newState);
       return;
     }
   }
@@ -653,7 +691,7 @@ class Game extends React.Component {
         };
         newState.selectedUids[cardId] = true;
         newState.currentAction = GameActions.SelectResourceUpgrade;
-        this.setState(newState);
+        this.updateState(newState);
         break;
       default:
         this.showError('Invalid card, pick another one');
@@ -679,7 +717,7 @@ class Game extends React.Component {
       if( activePlayer.resources.length <= PlayerMaxResources ){
         this.endTurn(newState);
       }else{
-        this.setState(newState);
+        this.updateState(newState);
       }
       return;
     }
@@ -695,7 +733,7 @@ class Game extends React.Component {
       if( newState.currentActionData.numUpgradesRemaining === 0 ){
         this.onPlayerPass(newState);
       }else{
-        this.setState(newState);
+        this.updateState(newState);
       }
       return;
     }
@@ -714,7 +752,7 @@ class Game extends React.Component {
         }
       }
       if( payment.length < newState.currentActionData.numResourcesForPayment ){
-        this.setState(newState);
+        this.updateState(newState);
         return;
       }
       // Execute the action
@@ -737,7 +775,7 @@ class Game extends React.Component {
     // check if the active player has too many resources and should discard
     if( activePlayer.resources.length > PlayerMaxResources){
       newState.currentAction = GameActions.DiscardResources;
-      this.setState(newState);
+      this.updateState(newState);
       return;
     }
 
@@ -757,19 +795,19 @@ class Game extends React.Component {
     if( game.activePlayerIndex === 0 ){
       newState.turn++;
     }
-    this.setState(newState);
+    this.updateState(newState);
   }
 
   onCancelPlayerAction(){
     const newState = this.copyState();
     newState.currentAction = null;
     newState.selectedUids = {};
-    this.setState(newState);
+    this.updateState(newState);
   }
 
   onPlayerPass(state){
     if( state.currentAction === GameActions.SelectResourceUpgrade ){
-      const newState = this.copyState();
+      const newState = this.copyState(state);
       let activePlayer = GameEngine.getActivePlayer(newState.game);
       console.log("No more upgrades, discard the card", activePlayer);
       activePlayer = GameEngine.playerDiscardCard(activePlayer, newState.currentActionData.cardId);
@@ -825,18 +863,13 @@ class Game extends React.Component {
           />
         </div>
         <div id="game-board">
-          <div id="action-bar">
-            {this.state.lastTurnStartingPlayer !== null ?
-              <div className="last-turn-message">Last Turn</div> : <div />
-            }
-            <ActionBar
-              gameState={this.state}
-              currentAction={this.state.currentAction}
-              onCancelPlayerAction={this.onCancelPlayerAction}
-              onPlayerPass={()=>this.onPlayerPass(this.state)}
-              onPlayerRests={this.onPlayerRests}
-            />
-          </div>
+          <ActionBar
+            gameState={this.state}
+            currentAction={this.state.currentAction}
+            onCancelPlayerAction={this.onCancelPlayerAction}
+            onPlayerPass={()=>this.onPlayerPass(this.state)}
+            onPlayerRests={this.onPlayerRests}
+          />
           <PlayerHand
             gameState={this.state}
             player={GameEngine.getActivePlayer(this.state.game)}
