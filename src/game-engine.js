@@ -191,10 +191,12 @@ const AllVictoryCards = Object.entries(VictoryCardsData).map(
   (data) => createVictoryCard(data[1], data[0])
 );
 
-const createPlayer = (name, turnOrder) => {
+const createPlayer = (playerInfo, turnOrder) => {
   return {
-    uid: guid(),
-    name: name,
+    uid: playerInfo.uid,
+    name: playerInfo.name,
+    img: playerInfo.img,
+    email: playerInfo.email,
     hand: PlayerStartingHand(),
     discardPile: [],
     victoryCards: [],
@@ -234,10 +236,10 @@ const createGameBoard = (numPlayers) => {
   return gameBoard;
 };
 
-const createGame = (playerNames) => {
+const createGame = (playerInfoList) => {
   let players = [];
-  for (let turnOrder = 0; turnOrder < playerNames.length; turnOrder++) {
-    players.push(createPlayer(playerNames[turnOrder], turnOrder));
+  for (let turnOrder = 0; turnOrder < playerInfoList.length; turnOrder++) {
+    players.push(createPlayer(playerInfoList[turnOrder], turnOrder));
   }
   return {
     activePlayerIndex: 0,

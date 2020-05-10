@@ -184,6 +184,7 @@ class ProfilePage extends React.Component {
   }
 
   invitePlayer(gameId){
+    const user = this.context;
     let email = prompt("Enter player email","")
     if( email === null ){
       return;
@@ -200,6 +201,9 @@ class ProfilePage extends React.Component {
       return transaction.get(gameRef).then(doc => {
         if( ! doc.exists ){
           throw new Error('Game deleted');
+        }
+        if( user.id !== doc.data().admin ){
+          throw new Error('Admin only');
         }
         if( doc.data().guests.includes(email) ){
           return doc.data().guests;
@@ -220,6 +224,7 @@ class ProfilePage extends React.Component {
       return;
     }
     // TODO update state "deleting"
+    // Don't need admin check it's managed by firestore rules
     firestore.collection('games').doc(gameId).delete()
     .then(()=>{
       console.log("Delete successful");
@@ -284,9 +289,10 @@ class ProfilePage extends React.Component {
         if( ! doc.exists ){
           throw new Error('Game deleted');
         }
-        const playerList = doc.data().players.map(p => p.name);
-        console.log(playerList);
-        const game = GameEngine.createGame(playerList);
+        if( user.id !== doc.data().admin ){
+          throw new Error('Admin only');
+        }
+        const game = GameEngine.createGame(doc.data().players);
         transaction.update(gameRef,{game: game});
         return game;
       });
