@@ -1,4 +1,5 @@
 import React from "react";
+import {navigate} from "@reach/router";
 import { UserContext } from "../providers/UserProvider";
 import {auth, firestore} from "../firebase";
 import GameEngine from "../game-engine.js";
@@ -304,7 +305,7 @@ class ProfilePage extends React.Component {
   }
 
   playGame(gameId){
-    // TODO route
+    return navigate(`/game/${gameId}`);
   }
 
   componentDidMount() {

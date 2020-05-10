@@ -544,15 +544,9 @@ class Game extends React.Component {
     this.dismissError = this.dismissError.bind(this);
 
     this.state = {
-      game: GameEngine.createGame(['yohan','claire','weesiong']),
-      turn: 0,
-      error: null,
-      history: [],
-      selectedUids: {},
-      currentAction: null,
-      currentActionData: null,
-      lastTurnStartingPlayer: null,
-    };
+      gameId: this.props.gameId,
+      loading: true,
+    }
   }
 
   updateState(newState){
@@ -838,6 +832,14 @@ class Game extends React.Component {
   }
 
   render() {
+    if( this.state.loading ){
+      return (
+        <div className='loading'>
+          Loading game...
+        </div>
+      );
+    }
+
     if(this.state.lastTurnStartingPlayer === this.state.game.activePlayerIndex ){
       return (
         <EndGameScoring players={this.state.game.players} />
