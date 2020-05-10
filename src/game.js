@@ -7,11 +7,6 @@ import {
   CardType,
   ResourceOrder,
 } from './game-data.js';
-import firebase from './config.js';
-// Firebase App (the core Firebase SDK) is always required and
-// must be listed before other Firebase SDKs
-import "firebase/auth";
-import "firebase/firestore";
 
 const GameActions = {
   DiscardResources: 'DiscardResources',
