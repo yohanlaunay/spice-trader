@@ -10,10 +10,14 @@ body {
   margin: 1px;
   background-repeat: no-repeat;
   background-size: contain;
+  background-position: center;
 }
 
 .resource.selected {
-  border: solid 10px red;
+  border-spacing: 50px;
+  border-radius: 10px;
+  background-color: rgba(128,128,128,0.85);
+  background-size: 80%;
 }
 
 .resource-Y {
