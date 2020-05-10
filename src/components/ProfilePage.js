@@ -14,8 +14,6 @@ const GameSession = (props) => {
   const gameData = props.gameData;
   const user = props.user;
 
-  // TODO list player size game ready to start when all players are there.
-
   function invitePlayer(){
     let email = prompt("Enter player email","")
     if( email === null ){
@@ -44,7 +42,7 @@ const GameSession = (props) => {
     }).then(newOwners=>{
       console.log('Invite successful', newOwners); // TODO
     }).catch(error => {
-      console.log('Error adding players', error); // TODO
+      alert('Error adding players', error); // TODO
     });
   }
 
@@ -53,7 +51,7 @@ const GameSession = (props) => {
     .then(()=>{
       console.log("Delete successful");
     }).catch(error => {
-      console.log("Error deleting the game",error);
+      alert("Error deleting the game",error); // TODO
     });
   }
 
@@ -80,47 +78,97 @@ const GameSession = (props) => {
     }).then(newPlayers=>{
       console.log('Join successful', newPlayers); // TODO
     }).catch(error => {
-      console.log('Error joining session', error); // TODO
+      alert('Error joining session', error); // TODO
     });
   }
 
-  let playersUi = [];
-  gameData.players.forEach(player => {
-    playersUi.push(
-      <div className='player' key={player.uid}>
-        <img src={player.img} width='48px' height='48px' /><br />
-        Name: {player.name}<br />
-        Email: {player.email}
-      </div>
-    );
-  });
+  function startGame(){
+    // TODO
+  }
 
-  let invitedPlayers = [];
-  gameData.owners.forEach(owner =>{
-    if( !gameData.players.find(p=>p.email === owner) ){
-      invitedPlayers.push(
-        <div key={owner}>
-          {owner}
+  function renderGameWaitingForPlayers(){
+    let playersUi = [];
+    gameData.players.forEach(player => {
+      playersUi.push(
+        <div className='player' key={player.uid}>
+          <img src={player.img} width='48px' height='48px' /><br />
+          Name: {player.name}<br />
+          Email: {player.email}
         </div>
       );
+    });
+    let invitedPlayers = [];
+    gameData.owners.forEach(owner =>{
+      if( !gameData.players.find(p=>p.email === owner) ){
+        invitedPlayers.push(
+          <div key={owner}>
+            {owner}
+          </div>
+        );
+      }
+    });
+
+    const actions = [];
+    const isConfirmedPlayer = gameData.players.find(p => p.uid === user.uid);
+    // Join action
+    if( !isConfirmedPlayer && gameData.players.length < MaxPlayerCount ){
+      actions.push(
+        <div className='join-game'
+          key='action-join'
+          onClick={joinGame}>Join</div>
+      );
     }
-  });
+    // Invite action
+    actions.push(
+      <div className='invite-player'
+        key='action-invite'
+        onClick={invitePlayer}>Invite</div>
+    );
+    // Delete game
+    if( isConfirmedPlayer ){
+      actions.push(
+        <div className='delete-game'
+          key='action-delete'
+          onClick={deleteGame}>Delete</div>
+      );
+    }
+    // If enough players can start
+    if( gameData.players.length >= MinPlayerCount && gameData.players.length <= MaxPlayerCount ){
+      actions.push(
+        <div className='start-game'
+          key='start-delete'
+          onClick={startGame}>Start</div>
+      );
+    }
 
-  // TODO cannot join if already joined.
+    return (
+      <div className='game'>
+        Game Id: {gameId}<br />
+        Status: {GameSessionStatus[gameData.status]}<br />
+        Confirmed Players: <br />
+        {playersUi}
+        Invited Players: <br />
+        {invitedPlayers}
+        {actions}
+      </div>
+    );
+  }
 
-  return (
-    <div className='game'>
-      Game Id: {gameId}<br />
-      Status: {GameSessionStatus[gameData.status]}<br />
-      Confirmed Players: <br />
-      {playersUi}
-      Invited Players: <br />
-      {invitedPlayers}
-      <button onClick={joinGame}>Join</button> |
-      <button onClick={invitePlayer}>Invite</button> |
-      <button onClick={deleteGame}>Delete Game</button>
-    </div>
-  );
+  function renderStartedGame(){
+    // TODO
+  }
+
+  switch( gameData.status ){
+    case GameSessionStatus.STARTED:
+      return renderStartedGame();
+    case GameSessionStatus.WAITING_FOR_PLAYERS:
+      return renderGameWaitingForPlayers();
+    default:
+      return <div />;
+  }
+
+
+  // TODO list player size game ready to start when all players are there.
 };
 
 const GameSessionList = (props) => {
