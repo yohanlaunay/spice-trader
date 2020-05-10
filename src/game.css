@@ -285,10 +285,7 @@
   padding: 4px;
 }
 
-.player.selected {
-  padding: 2px;
-  transform: scale(1.08, 1.08);
-}
+.player.selected {}
 
 .player.not-selected {
   background-color: rgba(128, 128, 128, 0.2);
