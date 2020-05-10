@@ -14,7 +14,7 @@ const GameSession = (props) => {
     const playersUi = gameData.players.map(player => {
       return (
         <div className='confirmed-player' key={player.uid}>
-          <img src={player.img} width='48px' height='48px' /><br />
+          <img alt='player' src={player.img} width='48px' height='48px' /><br />
           Name: {player.name}<br />
           Email: {player.email}
         </div>
@@ -38,31 +38,31 @@ const GameSession = (props) => {
     // Join action
     if( !isConfirmedPlayer && gameData.players.length < MaxPlayerCount ){
       actions.push(
-        <div className='action join'
+        <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full"
           key='action-join'
-          onClick={() => props.joinGame(gameId)}>Join</div>
+          onClick={() => props.joinGame(gameId)}>Join</button>
       );
     }
     // [Admin only]
     if( isGameAdmin ){
       // Invite action
       actions.push(
-        <div className='action invite'
+        <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full"
           key='action-invite'
-          onClick={()=>props.invitePlayer(gameId)}>Invite</div>
+          onClick={()=>props.invitePlayer(gameId)}>Invite</button>
       );
       // Delete Game
       actions.push(
-        <div className='action delete-game'
+        <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
           key='action-delete'
-          onClick={()=>props.deleteGame(gameId)}>Delete</div>
+          onClick={()=>props.deleteGame(gameId)}>Delete</button>
       );
       // If enough players can start
       if( gameData.players.length >= MinPlayerCount && gameData.players.length <= MaxPlayerCount ){
         actions.push(
-          <div className='action start-game'
+          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
             key='action-start'
-            onClick={()=>props.startGame(gameId)}>Start</div>
+            onClick={()=>props.startGame(gameId)}>Start</button>
         );
       }
     }
@@ -83,7 +83,7 @@ const GameSession = (props) => {
     const playersUi = gameData.players.map(player => {
       return (
         <div className='player' key={player.uid}>
-          <img src={player.img} width='48px' height='48px' /><br />
+          <img alt='player' src={player.img} width='48px' height='48px' /><br />
           Name: {player.name}<br />
           Email: {player.email}
         </div>
@@ -96,17 +96,17 @@ const GameSession = (props) => {
     // Play action
     if( isConfirmedPlayer ){
       actions.push(
-        <div className='action play'
+        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
           key='action-play'
-          onClick={() => props.playGame(gameId)}>Play</div>
+          onClick={() => props.playGame(gameId)}>Play</button>
       );
       // [Admin only]
       if( isGameAdmin ){
         // Delete Game
         actions.push(
-          <div className='action delete-game'
+          <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
             key='action-delete'
-            onClick={()=>props.deleteGame(gameId)}>Delete</div>
+            onClick={()=>props.deleteGame(gameId)}>Delete</button>
         );
       }
     }
@@ -157,7 +157,7 @@ const GameSessionList = (props) => {
 
   return (
     <div className='game-list'>
-      <button onClick={props.createGame}>Create Game</button>
+      <button className="w-full py-3 bg-blue-600 mt-4 text-white"  onClick={props.createGame}>Create Game</button>
       {games}
     </div>
   );
@@ -182,6 +182,10 @@ class ProfilePage extends React.Component {
         loading: true,
       },
     };
+  }
+
+  componentWillMount(){
+    require('../profile.css');
   }
 
   invitePlayer(gameId){
