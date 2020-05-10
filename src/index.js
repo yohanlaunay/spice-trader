@@ -440,11 +440,10 @@ function PlayerScore(props){
     <div className={classNames.join(' ')}>
       <div className='name'>{player.name}</div>
       <div className='score'>
-        Total: {score.total} <br />
-        <hr />
-        Victory cards: {score.victoryCards} <br />
-        Coins: {score.coins} <br />
-        Resources: {score.resources} <br />
+        <div className='score-total'>Total: <span>{score.total}</span></div>
+        <div className='score-from-cards'>Victory cards: <span>{score.victoryCards}</span></div>
+        <div className='score-from-coins'>Coins: <span>{score.coins}</span></div>
+        <div className='score-from-resources'>Resources: <span>{score.resources}</span></div>
       </div>
     </div>
   );
@@ -483,7 +482,11 @@ function EndGameScoring(props) {
 
   return (
     <div className='end-game'>
-      {scoresUi}
+      <div className='end-game-content'>
+        <div id='game-logo' />
+        <div className='title'>End Game Scoring</div>
+        {scoresUi}
+      </div>
     </div>
   );
 }

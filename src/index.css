@@ -1,4 +1,4 @@
-body {
+.body {
   font: 14px "Century Gothic", Futura, sans-serif;
   margin: 0px;
   padding: 0px;
@@ -360,15 +360,6 @@ body {
   font-size: 16pt;
 }
 
-.player-score {
-  border: solid 2px black;
-  margin: 10px;
-}
-
-.player-score.winner {
-  background-color: gold;
-}
-
 .game-log {
   margin: 5px;
   margin-top: 20px;
@@ -420,6 +411,67 @@ body {
 }
 
 .game-log .entries .entry .player-name .action {}
+
+.end-game {
+  display: flex;
+  justify-content: center;
+}
+
+.end-game .title {
+  font-size: 18pt;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.end-game .end-game-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.end-game .player-score {
+  display: flex;
+  flex-direction: row;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  transition: 0.3s;
+  margin-bottom: 30px;
+  min-width: 300px;
+  padding: 10px;
+}
+
+.end-game .player-score .name {
+  margin: 10px;
+  font-size: 16pt;
+  font-weight: bold;
+  color: black;
+}
+
+.end-game .player-score .score {}
+
+.end-game .player-score .score .score-total {
+  font-size: 16pt;
+  font-weight: bold;
+  color: black;
+  margin-bottom: 10px;
+}
+
+.end-game .player-score .score span {
+  color: red;
+  font-weight: bold;
+}
+
+.end-game .player-score .score .score-from-cards {}
+
+.end-game .player-score .score .score-from-coins {}
+
+.end-game .player-score .score .score-from-resources {}
+
+.end-game .player-score.winner {
+  box-shadow: 0 4px 8px 0 rgba(255,215,0,0.85);
+  background-color: rgba(255,215,0,0.85);
+  transform: scale(1.15, 1.15);
+}
 
 #game {
   display: flex;
