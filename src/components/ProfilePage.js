@@ -15,57 +15,60 @@ const GameSession = (props) => {
   const user = props.user;
 
   function renderGameWaitingForPlayers(){
-    let playersUi = gameData.players.forEach(player => {
+    const playersUi = gameData.players.map(player => {
       return (
-        <div className='player' key={player.uid}>
+        <div className='confirmed-player' key={player.uid}>
           <img src={player.img} width='48px' height='48px' /><br />
           Name: {player.name}<br />
           Email: {player.email}
         </div>
       );
     });
-    let invitedPlayers = [];
-    gameData.owners.forEach(owner =>{
-      if( !gameData.players.find(p=>p.email === owner) ){
+    const invitedPlayers = [];
+    gameData.guests.forEach(guest =>{
+      if( !gameData.players.find(p=>p.email === guest)
+        && guest !== user.email ){
         invitedPlayers.push(
-          <div key={owner}>
-            {owner}
+          <div key={guest} className='guest'>
+            {guest}
           </div>
         );
       }
     });
 
     const actions = [];
+    const isGameAdmin = gameData.admin === user.uid;
     const isConfirmedPlayer = gameData.players.find(p => p.uid === user.uid);
     // Join action
     if( !isConfirmedPlayer && gameData.players.length < MaxPlayerCount ){
       actions.push(
-        <div className='join-game'
+        <div className='action join'
           key='action-join'
           onClick={() => props.joinGame(gameId)}>Join</div>
       );
     }
-    // Invite action
-    actions.push(
-      <div className='invite-player'
-        key='action-invite'
-        onClick={()=>props.invitePlayer(gameId)}>Invite</div>
-    );
-    // Delete game
-    if( isConfirmedPlayer ){
+    // [Admin only]
+    if( isGameAdmin ){
+      // Invite action
       actions.push(
-        <div className='delete-game'
+        <div className='action invite'
+          key='action-invite'
+          onClick={()=>props.invitePlayer(gameId)}>Invite</div>
+      );
+      // Delete Game
+      actions.push(
+        <div className='action delete-game'
           key='action-delete'
           onClick={()=>props.deleteGame(gameId)}>Delete</div>
       );
-    }
-    // If enough players can start
-    if( gameData.players.length >= MinPlayerCount && gameData.players.length <= MaxPlayerCount ){
-      actions.push(
-        <div className='start-game'
-          key='start-delete'
-          onClick={()=>props.startGame(gameId)}>Start</div>
-      );
+      // If enough players can start
+      if( gameData.players.length >= MinPlayerCount && gameData.players.length <= MaxPlayerCount ){
+        actions.push(
+          <div className='action start-game'
+            key='action-start'
+            onClick={()=>props.startGame(gameId)}>Start</div>
+        );
+      }
     }
 
     return (
@@ -82,7 +85,45 @@ const GameSession = (props) => {
   }
 
   function renderStartedGame(){
-    // TODO
+    const playersUi = gameData.players.map(player => {
+      return (
+        <div className='player' key={player.uid}>
+          <img src={player.img} width='48px' height='48px' /><br />
+          Name: {player.name}<br />
+          Email: {player.email}
+        </div>
+      );
+    });
+
+    const actions = [];
+    const isGameAdmin = gameData.admin === user.uid;
+    const isConfirmedPlayer = gameData.players.find(p => p.uid === user.uid);
+    // Play action
+    if( isConfirmedPlayer ){
+      actions.push(
+        <div className='action play'
+          key='action-play'
+          onClick={() => props.playGame(gameId)}>Join</div>
+      );
+      // [Admin only]
+      if( isGameAdmin ){
+        // Delete Game
+        actions.push(
+          <div className='action delete-game'
+            key='action-delete'
+            onClick={()=>props.deleteGame(gameId)}>Delete</div>
+        );
+      }
+    }
+    return (
+      <div className='game'>
+        Game Id: {gameId}<br />
+        Status: {GameSessionStatus[gameData.status]}<br />
+        Players: <br />
+        {playersUi}
+        {actions}
+      </div>
+    );
   }
 
   switch( gameData.status ){
@@ -93,9 +134,6 @@ const GameSession = (props) => {
     default:
       return <div />;
   }
-
-
-  // TODO list player size game ready to start when all players are there.
 };
 
 const GameSessionList = (props) => {
@@ -108,8 +146,6 @@ const GameSessionList = (props) => {
       </div>
     );
   }
-
-  // TODO check player status
 
   const games = Object.entries(gameList.games).map(data => {
     const gameId = data[0];
@@ -174,15 +210,15 @@ class ProfilePage extends React.Component {
         if( ! doc.exists ){
           throw new Error('Game deleted');
         }
-        if( doc.data().owners.includes(email) ){
-          return doc.data().owners;
+        if( doc.data().guests.includes(email) ){
+          return doc.data().guests;
         }
-        const newOwners = [email].concat(doc.data().owners);
-        transaction.update(gameRef,{owners: newOwners});
-        return newOwners;
+        const newGuests = [email].concat(doc.data().guests);
+        transaction.update(gameRef,{guests: newGuests});
+        return newGuests;
       });
-    }).then(newOwners=>{
-      console.log('Invite successful', newOwners); // TODO
+    }).then(newGuests=>{
+      console.log('Invite successful', newGuests); // TODO
     }).catch(error => {
       alert('Error adding players', error); // TODO
     });
@@ -231,7 +267,8 @@ class ProfilePage extends React.Component {
     const user = this.context;
      firestore.collection('games').add({
        status: GameSessionStatus.WAITING_FOR_PLAYERS,
-       owners: [user.email],
+       guests: [user.email],
+       admin: user.uid,
        players: [{
          uid: user.uid,
          img: user.photoURL,
@@ -256,7 +293,7 @@ class ProfilePage extends React.Component {
     const {email} = user;
     // Subscribe to games list
     firestore.collection('games').where(
-      "owners", "array-contains", email
+      "guests", "array-contains", email
     ).onSnapshot(snapshot => {
         const games = {};
         snapshot.forEach(doc => games[doc.id] = doc.data());
