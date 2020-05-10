@@ -4,10 +4,6 @@ body {
   padding: 0px;
 }
 
-ol, ul {
-  padding-left: 30px;
-}
-
 .resource {
   width: 21px;
   height: 21px;
@@ -68,6 +64,11 @@ ol, ul {
   background-repeat: no-repeat;
   background-size: contain;
 }
+
+.card:hover {
+ transform: scale(1.15,1.15);
+}
+
 
 .card.selected {
   border: solid 10px red;
@@ -286,6 +287,11 @@ ol, ul {
 .player .resource {
   width: 32px;
   height: 32px;
+}
+
+
+.player.selected .resource:hover {
+ transform: scale(1.15,1.15);
 }
 
 .player .header {
