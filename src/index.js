@@ -453,11 +453,54 @@ function EndGameScoring(props) {
   );
 }
 
+function GameLog(props){
+  const history = props.history;
+  const entries = [
+    [
+      <div className='turn-entry' key={'turn_start'}>
+        <span className='turn'>Game Start</span>
+      </div>
+    ]
+  ];
+  let lastTurn = -1;
+  for( const entry of history ){
+    const key = entry.turn+'_'+entry.playerId;
+    if( entry.turn !== lastTurn ){
+      lastTurn = entry.turn;
+      entries.unshift([
+        <div className='turn-entry' key={'turn_'+lastTurn}>
+          Turn <span className='turn'>{lastTurn+1}</span>
+        </div>
+      ]);
+    }
+    const classNames = ['entry'];
+    if( entry.isVpCard ){
+      classNames.push('vp');
+    }
+    entries[0].push(
+      <div className={classNames.join(' ')} key={key}>
+        <span className='player-name'>{entry.playerName}</span>
+        <span className='action'>{entry.action}</span>
+      </div>
+    );
+  }
+  return (
+    <div className='game-log'>
+      <div className='title'>Moves history</div>
+      <div className='entries'>
+        {entries.map(e => e.map(e2 => e2))}
+      </div>
+    </div>
+  );
+}
+
 class Game extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       game: GameEngine.createGame(['yohan','claire','weesiong']),
+      turn: 0,
+      history: [],
       selectedUids: {},
       currentAction: null,
       currentActionData: null,
@@ -471,6 +514,17 @@ class Game extends React.Component {
     this.onPlayerPass = this.onPlayerPass.bind(this);
     this.onPlayerRests = this.onPlayerRests.bind(this);
   }
+
+  createLog(state, player, action, isVpCard=false){
+      return {
+        turn: state.turn,
+        playerId: player.uid,
+        playerName: player.name,
+        action: action,
+        isVpCard: !!isVpCard,
+      };
+  }
+
   onVictoryCardClicked(cardId){
     const newState = GameEngine.copy(this.state);
     if( newState.currentAction !== null ){
@@ -486,6 +540,7 @@ class Game extends React.Component {
     }
     newState.game.players[newState.game.activePlayerIndex] = result.player;
     newState.game.board = result.board;
+    newState.history.push(this.createLog(newState, activePlayer, 'claimed VPs', true));
     this.endTurn(newState);
   }
   onResourceCardClicked(cardId){
@@ -508,6 +563,7 @@ class Game extends React.Component {
       }
       newState.game.players[newState.game.activePlayerIndex] = result.player;
       newState.game.board = result.board;
+      newState.history.push(this.createLog(newState, activePlayer, 'bought a card'));
       this.endTurn(newState);
       return;
     }else{
@@ -537,6 +593,7 @@ class Game extends React.Component {
           return false;
         }
         newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+        newState.history.push(this.createLog(newState, activePlayer, 'produced'));
         this.endTurn(newState);
         break;
       case CardType.Trading:
@@ -553,6 +610,7 @@ class Game extends React.Component {
           return false;
         }
         newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+        newState.history.push(this.createLog(newState, activePlayer, 'traded'));
         this.endTurn(newState);
         break;
       case CardType.Upgrade:
@@ -630,6 +688,7 @@ class Game extends React.Component {
       }
       newState.game.players[newState.game.activePlayerIndex] = result.player;
       newState.game.board = result.board;
+      newState.history.push(this.createLog(newState, activePlayer, 'bought a card'));
       this.endTurn(newState);
       return;
     }
@@ -657,6 +716,10 @@ class Game extends React.Component {
       newState.lastTurnStartingPlayer = game.activePlayerIndex;
     }
     game.activePlayerIndex = (game.activePlayerIndex + 1) % game.players.length;
+    // increase turn count when it's first player's turn again
+    if( game.activePlayerIndex === 0 ){
+      newState.turn++;
+    }
     this.setState(newState);
   }
 
@@ -677,6 +740,7 @@ class Game extends React.Component {
         return false;
       }
       newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+      newState.history.push(this.createLog(newState, activePlayer, 'upgraded'));
       this.endTurn(newState);
       return;
     }
@@ -687,6 +751,7 @@ class Game extends React.Component {
     let activePlayer = GameEngine.getActivePlayer(newState.game);
     activePlayer = GameEngine.playerRests(activePlayer);
     newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+    newState.history.push(this.createLog(newState, activePlayer, 'rested'));
     this.endTurn(newState); // nothing async, end the action
   }
 
@@ -705,6 +770,10 @@ class Game extends React.Component {
             gameState={this.state}
             players={this.state.game.players}
             onResourceClicked={this.onActivePlayerResourceClicked}
+          />
+          <GameLog
+            gameState={this.state}
+            history={this.state.history}
           />
         </div>
         <div id="game-board">
