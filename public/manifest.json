@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "The Spice Trader",
+  "name": "The Spice Trader online board game",
   "icons": [
     {
       "src": "favicon.ico",

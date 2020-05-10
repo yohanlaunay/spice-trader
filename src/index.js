@@ -8,6 +8,11 @@ import {
   CardType,
   ResourceOrder,
 } from './data.js';
+import firebase from './config.js';
+// Firebase App (the core Firebase SDK) is always required and
+// must be listed before other Firebase SDKs
+import "firebase/auth";
+import "firebase/firestore";
 
 const GameActions = {
   DiscardResources: 'DiscardResources',
@@ -535,16 +540,6 @@ function GameLog(props){
 class Game extends React.Component {
   constructor(props){
     super(props);
-    this.state = {
-      game: GameEngine.createGame(['yohan','claire','weesiong']),
-      turn: 0,
-      error: null,
-      history: [],
-      selectedUids: {},
-      currentAction: null,
-      currentActionData: null,
-      lastTurnStartingPlayer: null,
-    };
     this.onVictoryCardClicked = this.onVictoryCardClicked.bind(this);
     this.onResourceCardClicked = this.onResourceCardClicked.bind(this);
     this.onActivePlayerCardClicked = this.onActivePlayerCardClicked.bind(this);
@@ -553,6 +548,23 @@ class Game extends React.Component {
     this.onPlayerPass = this.onPlayerPass.bind(this);
     this.onPlayerRests = this.onPlayerRests.bind(this);
     this.dismissError = this.dismissError.bind(this);
+
+// TODO - TEMP
+    let gameData = null;
+    if( gameData === null ){
+      // create a new game
+      gameData = {
+        game: GameEngine.createGame(['yohan','claire','weesiong']),
+        turn: 0,
+        error: null,
+        history: [],
+        selectedUids: {},
+        currentAction: null,
+        currentActionData: null,
+        lastTurnStartingPlayer: null,
+      };
+    }
+    this.state = {};
   }
 
   updateState(newState){
@@ -897,9 +909,60 @@ class Game extends React.Component {
   }
 }
 
+class App extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      gameId: 'dev', // TODO
+    }
+    // TODO do this when button "create game" is pressed
+    let gameData = null;
+    if( gameData === null ){
+      // create a new game
+      gameData = {
+        game: GameEngine.createGame(['yohan','claire','weesiong']),
+        turn: 0,
+        error: null,
+        history: [],
+        selectedUids: {},
+        currentAction: null,
+        currentActionData: null,
+        lastTurnStartingPlayer: null,
+      };
+      //firebase.push('games/'+gameId, )
+    }
+  }
+
+  subscribeToFirebaseState(){
+    let gameData = firebase.firestore()
+      .collection('games')
+      .doc(this.state.gameId)
+      .onSnapshot((doc) => {
+        const state = doc.data();
+        console.log("NEW DATA",state); // TODO
+        // this.setState(state);
+      });
+  }
+
+  componentDidMount() {
+    this.subscribeToFirebaseState();
+  }
+
+  render(){
+    if( !this.state.game ){
+      return (
+          <div>LOADING GAME...</div>
+      );
+    }
+    return (
+        <div>GAME!</div>
+    );
+  }
+}
+
 // ========================================
 
 ReactDOM.render(
-  <Game />,
+  <App />,
   document.getElementById('root')
 );
