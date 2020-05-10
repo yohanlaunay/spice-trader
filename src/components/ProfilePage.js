@@ -120,7 +120,7 @@ const GameSession = (props) => {
     );
   }
 
-  if( gameData.game === null ){
+  if( gameData.session === null ){
     return renderGameWaitingForPlayers();
   }
   return renderStartedGame();
@@ -203,7 +203,7 @@ class ProfilePage extends React.Component {
         if( ! doc.exists ){
           throw new Error('Game deleted');
         }
-        if( user.id !== doc.data().admin ){
+        if( user.uid !== doc.data().admin ){
           throw new Error('Admin only');
         }
         if( doc.data().guests.includes(email) ){
@@ -216,7 +216,7 @@ class ProfilePage extends React.Component {
     }).then(newGuests=>{
       console.log('Invite successful', newGuests); // TODO
     }).catch(error => {
-      alert('Error adding players', error); // TODO
+      alert('Error adding player:'+error); // TODO
     });
   }
 
@@ -230,7 +230,7 @@ class ProfilePage extends React.Component {
     .then(()=>{
       console.log("Delete successful");
     }).catch(error => {
-      alert("Error deleting the game",error); // TODO
+      alert("Error deleting the game:"+error); // TODO
     });
   }
 
@@ -258,7 +258,7 @@ class ProfilePage extends React.Component {
     }).then(newPlayers=>{
       console.log('Join successful', newPlayers); // TODO
     }).catch(error => {
-      alert('Error joining session', error); // TODO
+      alert('Error joining session:'+error); // TODO
     });
   }
 
@@ -290,17 +290,23 @@ class ProfilePage extends React.Component {
         if( ! doc.exists ){
           throw new Error('Game deleted');
         }
-        if( user.id !== doc.data().admin ){
+        if( user.uid !== doc.data().admin ){
           throw new Error('Admin only');
         }
         const game = GameEngine.createGame(doc.data().players);
-        transaction.update(gameRef,{game: game});
+        const gameSession = {
+          game: game,
+          turn: 0,
+          lastTurnStartingPlayer: null,
+          history: [],
+        }
+        transaction.update(gameRef,{session: gameSession});
         return game;
       });
     }).then(game => {
       console.log('Game started', game); // TODO
     }).catch(error => {
-      alert('Error creating game', error); // TODO
+      alert('Error creating game:'+error); // TODO
     });
   }
 

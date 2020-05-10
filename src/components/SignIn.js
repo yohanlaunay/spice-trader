@@ -1,5 +1,4 @@
 import React, {useState} from "react";
-import { Link } from "@reach/router";
 import {signInWithGoogle} from "../firebase";
 
 const SignIn = () => {
@@ -14,13 +13,6 @@ const SignIn = () => {
           className="bg-red-500 hover:bg-red-600 w-full py-2 text-white">
           Sign in with Google
         </button>
-        <p className="text-center my-3">
-          Don't have an account?{" "}
-          <Link to="signUp" className="text-blue-500 hover:text-blue-600">
-            Sign up here
-          </Link>{" "}
-          <br />
-        </p>
       </div>
     </div>
   );
