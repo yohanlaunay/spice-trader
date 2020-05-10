@@ -538,6 +538,17 @@
   padding: 10px;
 }
 
+#action-bar .updating-server-message {
+  font-size: 24pt;
+  color: red;
+  font-weight: bold;
+  display: none;
+}
+
+#action-bar .updating-server-message.active {
+  display: block;
+}
+
 #action-bar .last-turn-message {
   font-size: 24pt;
   color: red;

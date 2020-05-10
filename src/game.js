@@ -119,7 +119,7 @@ class VictoryCards extends React.Component {
 
     return (
       <div className="victory-board">
-        <h1>Victory Cards</h1>
+        <h2>Victory Cards</h2>
         <div className="card-list">
           {cardList}
         </div>
@@ -234,7 +234,7 @@ function ResourceCardSlots(props){
 
   return (
     <div className="resources-board">
-      <h1>Resource Cards</h1>
+      <h2>Resource Cards</h2>
       <div className="card-list">
         {cardList}
       </div>
@@ -245,15 +245,18 @@ function ResourceCardSlots(props){
 function PlayerHand(props){
   const player = props.player;
   return (
-    <div className='player-hand'>
-      {player.hand.map((card) =>
-        <ResourceCard
-          gameState={props.gameState}
-          key={card.uid}
-          card={card}
-          onClick={() => props.onCardClicked(card.uid)}
-        />
-      )}
+    <div>
+      <h2>Your Cards</h2>
+      <div className='player-hand'>
+        {player.hand.map((card) =>
+          <ResourceCard
+            gameState={props.gameState}
+            key={card.uid}
+            card={card}
+            onClick={() => props.onCardClicked(card.uid)}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -355,7 +358,6 @@ function ActionBar(props){
     );
   }
 
-  // TODO render non-active player
   function renderInitState(){
     const canRest = GameEngine.getActivePlayer(props.gameState.session.game).discardPile.length > 0;
     return (
@@ -431,8 +433,16 @@ function ActionBar(props){
     lastTurnClassNames.push('inactive');
   }
 
+  const updatingClassNames = ['updating-server-message'];
+  if( props.gameState.updating === true ){
+    updatingClassNames.push('active');
+  }else{
+    updatingClassNames.push('inactive');
+  }
+
   return (
     <div id='action-bar'>
+      <div className={updatingClassNames.join(' ')}>Sending move to server...</div>
       <div className={lastTurnClassNames.join(' ')}>Last Turn</div>
       {renderActionContent()}
     </div>
@@ -595,6 +605,7 @@ class Game extends React.Component {
       this.setState(newState);
       return;
     }
+    this.setState({updating: true});
     const user = this.context;
     const gameRef = firestore.collection('games').doc(this.props.gameId);
     firestore.runTransaction(transaction => {
@@ -611,8 +622,8 @@ class Game extends React.Component {
       newState.session = session;
       this.setState(newState);
     }).catch(error => {
-      alert('Error updating game, please try again'); // TODO
       newState.updating = false;
+      newState.error = 'Error updating game, please try again.';
       this.setState(newState);
     });
   }
