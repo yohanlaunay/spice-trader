@@ -606,7 +606,6 @@ class Game extends React.Component {
       return;
     }
     this.setState({updating: true});
-    const user = this.context;
     const gameRef = firestore.collection('games').doc(this.props.gameId);
     firestore.runTransaction(transaction => {
       return transaction.get(gameRef).then(doc => {
@@ -929,6 +928,10 @@ class Game extends React.Component {
     this.endTurn(newState); // nothing async, end the action
   }
 
+  navigateToProfilePage(){
+    return navigate('/');
+  }
+
   render() {
     const currentUser = this.context;
     if( !!this.state.loading ){
@@ -965,7 +968,7 @@ class Game extends React.Component {
             {error !== null ? error.message:''}
         </div>
         <div id='panel'>
-          <div id='game-logo' />
+          <div id='game-logo' onClick={()=>this.navigateToProfilePage()} />
           <Players
             gameState={this.state}
             players={this.state.session.game.players}
