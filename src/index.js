@@ -500,6 +500,7 @@ class Game extends React.Component {
     this.state = {
       game: GameEngine.createGame(['yohan','claire','weesiong']),
       turn: 0,
+      error: null,
       history: [],
       selectedUids: {},
       currentAction: null,
@@ -513,6 +514,34 @@ class Game extends React.Component {
     this.onCancelPlayerAction = this.onCancelPlayerAction.bind(this);
     this.onPlayerPass = this.onPlayerPass.bind(this);
     this.onPlayerRests = this.onPlayerRests.bind(this);
+    this.dismissError = this.dismissError.bind(this);
+  }
+
+  copyState(state){
+    const newState = GameEngine.copy(state||this.state);
+    newState.error = null;
+    return newState;
+  }
+
+  dismissError(error){
+    if( this.state.error === null ){
+      return;
+    }
+    if( error && error.uid !== this.state.error.uid ){
+      return;
+    }
+    const newState = this.copyState();
+    newState.error = null;
+    this.setState(newState);
+  }
+
+  showError(errorMessage){
+    const newState = this.copyState();
+    newState.error = {
+      uid: GameEngine.guid(),
+      message: errorMessage,
+    };
+    this.setState(newState);
   }
 
   createLog(state, player, action, isVpCard=false){
@@ -526,7 +555,7 @@ class Game extends React.Component {
   }
 
   onVictoryCardClicked(cardId){
-    const newState = GameEngine.copy(this.state);
+    const newState = this.copyState();
     if( newState.currentAction !== null ){
       return;
     }
@@ -535,7 +564,7 @@ class Game extends React.Component {
     let activePlayer = GameEngine.getActivePlayer(newState.game);
     let result = GameEngine.playerBuyVictoryCard(activePlayer, newState.game.board, cardId);
     if( result === false ){
-      console.log('Not enough resources to claim this card.');
+      this.showError('Not enough resources to claim this card');
       return;
     }
     newState.game.players[newState.game.activePlayerIndex] = result.player;
@@ -545,7 +574,7 @@ class Game extends React.Component {
   }
   onResourceCardClicked(cardId){
     // Set default action when clicked to playing a resource card
-    let newState = GameEngine.copy(this.state);
+    const newState = this.copyState();
     if( newState.currentAction !== null ){
       return;
     }
@@ -554,12 +583,14 @@ class Game extends React.Component {
     // check if it's the first card, first is free, have to pay for others.
     let selectedCardIndex = newState.game.board.resourceCardsLineUp.findIndex(c => c.card.uid === cardId);
     if( selectedCardIndex === -1 ){
-      return false;
+      this.showError('Invalid card picked, pick another one');
+      return;
     } else if( selectedCardIndex === 0 ){
       // all good can claim for free
       let result = GameEngine.playerBuyResourceCard(activePlayer, newState.game.board, cardId, []);
       if( result === false ){
-        return false;
+        this.showError('Not enough resources to pay for this card');
+        return;
       }
       newState.game.players[newState.game.activePlayerIndex] = result.player;
       newState.game.board = result.board;
@@ -577,7 +608,7 @@ class Game extends React.Component {
     }
   }
   onActivePlayerCardClicked(cardId){
-    const newState = GameEngine.copy(this.state);
+    const newState = this.copyState();
     if( newState.currentAction !== null ){
       return;
     }
@@ -590,7 +621,8 @@ class Game extends React.Component {
       case CardType.Production:
         activePlayer = GameEngine.playerPlayProductionCard(activePlayer, cardId);
         if (activePlayer === false) {
-          return false;
+          this.showError('Cannot play this card now, pick another one.');
+          return;
         }
         newState.game.players[newState.game.activePlayerIndex] = activePlayer;
         newState.history.push(this.createLog(newState, activePlayer, 'produced'));
@@ -603,11 +635,12 @@ class Game extends React.Component {
         }
         let numTrades = parseInt(selection);
         if( numTrades <= 0 ){
-          return false;
+          return;
         }
         activePlayer = GameEngine.playerPlayTradingCard(activePlayer, cardId, numTrades);
         if (activePlayer === false) {
-          return false;
+          this.showError('Invalid trade, check your resources and try again.');
+          return;
         }
         newState.game.players[newState.game.activePlayerIndex] = activePlayer;
         newState.history.push(this.createLog(newState, activePlayer, 'traded'));
@@ -623,22 +656,24 @@ class Game extends React.Component {
         this.setState(newState);
         break;
       default:
-        console.log('Invalid card');
+        this.showError('Invalid card, pick another one');
         return;
     }
   }
   onActivePlayerResourceClicked(resourceId){
-    const newState = GameEngine.copy(this.state);
+    const newState = this.copyState();
     // check that the resource belongs to the player
     let activePlayer = GameEngine.getActivePlayer(newState.game);
     if( activePlayer.resources.findIndex(r=>r.uid===resourceId) === -1){
+      this.showError('You can only select your own resources');
       return;
     }
 
     if( newState.currentAction === GameActions.DiscardResources ){
       activePlayer = GameEngine.playerDiscardResource(activePlayer, resourceId);
       if( activePlayer === false ){
-        return false;
+        this.showError('You can only select your own resources');
+        return;
       }
       newState.game.players[newState.game.activePlayerIndex] = activePlayer;
       if( activePlayer.resources.length <= PlayerMaxResources ){
@@ -652,7 +687,8 @@ class Game extends React.Component {
       let activePlayer = GameEngine.getActivePlayer(newState.game);
       activePlayer = GameEngine.playerUpgradeResource(activePlayer, resourceId);
       if( activePlayer === false ){
-        return false;
+        this.showError('This resource cannot be upgraded further');
+        return;
       }
       newState.game.players[newState.game.activePlayerIndex] = activePlayer;
       newState.currentActionData.numUpgradesRemaining--;
@@ -684,7 +720,8 @@ class Game extends React.Component {
       // Execute the action
       let result = GameEngine.playerBuyResourceCard(activePlayer, newState.game.board, newState.currentActionData.cardId, payment);
       if( result === false ){
-        return false;
+        this.showError('Not enough resources for paying for this card');
+        return;
       }
       newState.game.players[newState.game.activePlayerIndex] = result.player;
       newState.game.board = result.board;
@@ -695,7 +732,7 @@ class Game extends React.Component {
   }
 
   endTurn(state){
-    const newState = GameEngine.copy(state);
+    const newState = this.copyState(state);
     const activePlayer = GameEngine.getActivePlayer(newState.game);
     // check if the active player has too many resources and should discard
     if( activePlayer.resources.length > PlayerMaxResources){
@@ -724,7 +761,7 @@ class Game extends React.Component {
   }
 
   onCancelPlayerAction(){
-    const newState = GameEngine.copy(this.state);
+    const newState = this.copyState();
     newState.currentAction = null;
     newState.selectedUids = {};
     this.setState(newState);
@@ -732,12 +769,13 @@ class Game extends React.Component {
 
   onPlayerPass(state){
     if( state.currentAction === GameActions.SelectResourceUpgrade ){
-      const newState = GameEngine.copy(state);
+      const newState = this.copyState();
       let activePlayer = GameEngine.getActivePlayer(newState.game);
       console.log("No more upgrades, discard the card", activePlayer);
       activePlayer = GameEngine.playerDiscardCard(activePlayer, newState.currentActionData.cardId);
       if (activePlayer === false) {
-        return false;
+        this.showError('Error discarding this card');
+        return;
       }
       newState.game.players[newState.game.activePlayerIndex] = activePlayer;
       newState.history.push(this.createLog(newState, activePlayer, 'upgraded'));
@@ -747,7 +785,7 @@ class Game extends React.Component {
   }
 
   onPlayerRests(){
-    const newState = GameEngine.copy(this.state);
+    const newState = this.copyState();
     let activePlayer = GameEngine.getActivePlayer(newState.game);
     activePlayer = GameEngine.playerRests(activePlayer);
     newState.game.players[newState.game.activePlayerIndex] = activePlayer;
@@ -761,9 +799,19 @@ class Game extends React.Component {
         <EndGameScoring players={this.state.game.players} />
       );
     }
+    const error = this.state.error;
+    if( error !== null ){
+      setTimeout(() =>  this.dismissError(error), 3000);
+    }
 
     return (
       <div id="game">
+        <div id='error' className={error !== null?'active':'inactive'}>
+          <span
+            className='dismiss'
+            onClick={()=>this.dismissError()}>&times;</span>
+            {error !== null ? error.message:''}
+        </div>
         <div id='panel'>
           <div id='game-logo' />
           <Players

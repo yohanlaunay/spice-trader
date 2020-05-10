@@ -273,7 +273,7 @@ ol, ul {
   margin-bottom: 10px;
   width: 250px;
   padding: 4px;
-  background-color: rgba(0.5, 0.5, 0.5, 0.08);
+  background-color: rgba(128, 128, 128, 0.2);
 }
 
 .player.selected {
@@ -404,13 +404,46 @@ ol, ul {
   margin-right: 5px;
 }
 
-.game-log .entries .entry .player-name .action {
-
-}
+.game-log .entries .entry .player-name .action {}
 
 #game {
   display: flex;
   flex-direction: row;
+  position: relative;
+}
+
+#error {
+  position: fixed;
+  padding: 20px;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  background-color: rgba(255, 0, 0, 0.5);
+  border: solid 1px red;
+  color: white;
+  display: none;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+#error.active {
+  display: block;
+}
+
+#error .message {}
+
+#error .dismiss {
+  margin-left: 15px;
+  color: white;
+  font-weight: bold;
+  float: right;
+  font-size: 22px;
+  line-height: 20px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#error .dismiss:hover {
+  color: black;
 }
 
 #panel {

@@ -586,6 +586,7 @@ const getPlayerScore = (player) => {
 
 export const GameEngine = {
   copy: copy,
+  guid: guid,
   createGame: createGame,
   getPlayerScore: getPlayerScore,
   getActivePlayer: getActivePlayer,
