@@ -1,605 +1,905 @@
+import React from 'react';
+import './index.css';
+import GameEngine from './game-engine.js';
 import {
-  ResourceOrder,
-  ResourceVictoryPoints,
+  PlayerMaxResources,
+  PlayerMaxVictoryCards,
   CardType,
-  CoinsVictoryPoints,
-  ResourcesCardsData,
-  VictoryCardsData,
-  ResourceCardsLineUpSize,
-  VictoryCardsLineUpSize,
-  StartingVictoryCoins,
-  PlayerStartingResources,
-} from './data.js';
+  ResourceOrder,
+} from './game-data.js';
+import firebase from './config.js';
+// Firebase App (the core Firebase SDK) is always required and
+// must be listed before other Firebase SDKs
+import "firebase/auth";
+import "firebase/firestore";
 
-//=====================
-// Utils
-//=====================
-const guid = () => {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+const GameActions = {
+  DiscardResources: 'DiscardResources',
+  SelectResourceUpgrade: 'SelectResourceUpgrade',
+  PayResourceCard: 'PayResourceCard',
 };
 
-const copy = (inObject) => {
-  let outObject, value, key
-  if (typeof inObject !== "object" || inObject === null) {
-    return inObject // Return the value if inObject is not an object
-  }
-  // Create an array or object to hold the values
-  outObject = Array.isArray(inObject) ? [] : {}
-
-  for (key in inObject) {
-    value = inObject[key]
-    // Recursively (deep) copy for nested objects, including arrays
-    outObject[key] = copy(value)
-  }
-
-  return outObject
-};
-
-const shuffleDeck = (deck) => {
-  let temp = copy(deck);
-  let shuffledDeck = [];
-  for (let i = 0; i < deck.length; i++) {
-    let j = Math.floor(Math.random() * temp.length)
-    shuffledDeck.push(temp[j]);
-    temp.splice(j, 1);
-  }
-  return shuffledDeck;
+function isEntitySelected(props, uid){
+  return !!(props.gameState.selectedUids||{})[uid];
 }
 
-const drawCards = (deck, numberOfCardsToDraw) => {
-  deck = copy(deck);
-  let drawnCards = [];
-  while (deck.length > 0 && numberOfCardsToDraw > 0) {
-    drawnCards.push(deck.shift());
-    numberOfCardsToDraw--;
+function Resource(props){
+  const classNames = ["resource", "resource-"+props.value];
+  if( props.selected ){
+    classNames.push("selected");
   }
-  return {
-    cards: drawnCards,
-    deck: deck,
-    undrawn: numberOfCardsToDraw,
-  };
-};
-
-const transferAllCards = (deckFrom, deckTo) => {
-  deckTo = copy(deckTo);
-  for (let i = 0; i < deckFrom.length; i++) {
-    deckTo.push(deckFrom[i]);
+  if( props.clickable ){
+    classNames.push("clickable");
   }
-  return {
-    deckFrom: [],
-    deckTo: deckTo,
+  if( props.clickable ){
+    return <div className={classNames.join(' ')} onClick={props.onClick} />
   }
-};
-
-const createResource = (type) => {
-  return {
-    type: type,
-    uid: guid(),
-  };
+  return (
+    <div className={classNames.join(' ')} />
+  );
 }
 
-const createResourceRecipe = () => {
-  let recipe = {};
-  // Create the recipe
-  for (const type of ResourceOrder) {
-    recipe[type] = 0;
+function Resources(props){
+  const resources = [];
+  for(let resource of props.value){
+      resources.push(
+        <Resource
+          value={resource.type}
+          key={resource.uid}
+          clickable={!!props.onResourceClicked}
+          selected={isEntitySelected(props,resource.uid)}
+          onClick={() => props.onResourceClicked(resource.uid)}
+        />
+      );
   }
-  return recipe;
+  return (
+    <div className='resource-list'>{resources}</div>
+  );
 }
 
-const addResourceToRecipe = (recipe, type) => {
-  recipe = copy(recipe);
-  recipe[type]++;
-  return recipe;
-}
-
-const stringToResources = (str) => {
-  return str.split('').map(res => createResource(res));
-}
-
-// {'Y':0,'R':1,...}
-const stringToResourcesRecipe = (str) => {
-  let recipe = createResourceRecipe();
-  // Populate the recipe
-  for (const type of str.split('')) {
-    recipe[type]++;
-  }
-  return recipe;
-}
-
-// const resourcesToString = (res) => {
-//   return res.map(r => r.type).join('');
-// }
-
-const resourcesRecipeToResources = (resRecipe) => {
+function ResourcesRecipe(props){
   let resources = [];
-  for (const type of ResourceOrder) {
-    const quantity = resRecipe[type] || 0;
-    for (let i = 0; i < quantity; i++) {
-      resources.push(createResource(type));
+  for( let resourceType of ResourceOrder ){
+    const quantity = props.value[resourceType] || 0;
+    for( let q = 0; q < quantity; q++ ){
+      resources.push(
+        <Resource
+          value={resourceType}
+          key={resourceType+'_'+q}
+        />
+      );
     }
   }
-  return resources;
+  return (
+    <div className='resource-recipe'>{resources}</div>
+  );
 }
 
-// gold coin to first slot
-const cardRewardsGoldCoin = (board, cardIndex) => {
-  return board.coins.gold > 0 && cardIndex === 0;
+function VictoryCard(props) {
+  const card = props.card;
+  const classNames = ["card card-type-victory"];
+  if( isEntitySelected(props, card.uid) ){
+    classNames.push("selected");
+  }
+
+  let coinClassName = null;
+  if( props.hasGoldCoin ){
+    coinClassName = "gold";
+  }else if( props.hasSilverCoin ){
+    coinClassName = "silver";
+  }
+  return (
+      <div
+        className={classNames.join(' ')}
+        onClick={props.onClick}
+      >
+      {coinClassName!==null?<div className={'coin '+coinClassName} />:<div />}
+        <div className='points'>{card.points}</div>
+        <ResourcesRecipe value={card.cost} />
+      </div>
+    );
 }
 
-// gold coin to first slot, silver to second.
-// if ran out of gold coins, take a silver.
-const cardRewardsSilverCoin = (board, cardIndex) => {
-  return (board.coins.silver > 0) && (
-    (cardIndex === 0 && board.coins.gold === 0) ||
-    (cardIndex === 1 && board.coins.gold > 0));
+class VictoryCards extends React.Component {
+
+  render(){
+    const board = this.props.board;
+    const cardList = [];
+    for( const [index, card] of board.victoryCardsLineUp.entries()){
+      const hasGoldCoin = index === 0 && board.coins.gold > 0;
+      const hasSilverCoin = index === 1 && board.coins.silver > 0;
+      cardList.push(
+          <VictoryCard
+            gameState={this.props.gameState}
+            key={card.uid}
+            card={card}
+            hasGoldCoin={hasGoldCoin}
+            hasSilverCoin={hasSilverCoin}
+            onClick={() => this.props.onCardClicked(card.uid)}
+          />
+      );
+    };
+
+    return (
+      <div className="victory-board">
+        <h1>Victory Cards</h1>
+        <div className="card-list">
+          {cardList}
+        </div>
+      </div>
+    );
+  }
 }
 
-//=====================
-// Factories
-//=====================
-const createProductionCard = (productionStr) => {
-  let card = newResourceCard(CardType.Production);
-  card.production = stringToResourcesRecipe(productionStr);
-  return card;
-};
 
-const createTradingCard = (costStr, productionStr) => {
-  let card = newResourceCard(CardType.Trading);
-  card.cost = stringToResourcesRecipe(costStr);
-  card.production = stringToResourcesRecipe(productionStr);
-  return card;
-};
+function ResourceCard(props) {
+  const card = props.card;
+  const classNames = ['card', 'resource-card', 'card-type-'+card.type.toLowerCase()];
+  if( isEntitySelected(props, card.uid) ){
+    classNames.push('selected');
+  }
 
-const createUpgradeCard = (quantity = 1) => {
-  let card = newResourceCard(CardType.Upgrade);
-  card.upgradeCount = quantity || 1;
-  return card;
-};
+  function renderUpgradeCard(){
+    let upgradeCubes = [];
+    for( let i = 0; i < card.upgradeCount; i++ ){
+      upgradeCubes.push(
+        <div key={i} className='resource resource-any' />
+      );
+    }
+    return (
+        <div
+          className={classNames.join(' ')}
+          onClick={props.onClick}
+        >
+          <div className='upgrade-container'>
+            <div className='upgrade-arrow-top'></div>
+            <div className='upgrade-arrow'>
+              <div className='upgrade-cubes'>
+                {upgradeCubes}
+              </div>
+            </div>
+            <div className='upgrade-arrow-tip'></div>
+          </div>
+        </div>
+      );
+  }
+  function renderTradingCard(){
+    return (
+        <div
+          className={classNames.join(' ')}
+          onClick={props.onClick}
+        >
+          <div className='trading-container'>
+            <div className='trading-arrow'>
+              <div className='cost'>
+                <ResourcesRecipe value={card.cost} />
+              </div>
+              <div className='trading-inside-arrow' />
+              <div className='production'>
+                <ResourcesRecipe value={card.production} />
+              </div>
+            </div>
+            <div className='trading-arrow-tip'></div>
+          </div>
+        </div>
+      );
+  }
+  function renderProductionCard(){
+    return (
+        <div
+          className={classNames.join(' ')}
+          onClick={props.onClick}
+        >
+          <div className='production-container'>
+            <div className='production-arrow'>
+              <ResourcesRecipe value={card.production} />
+            </div>
+            <div className='production-arrow-tip'></div>
+          </div>
+        </div>
+      );
+  }
 
-const newResourceCard = (type) => {
-  return {
-    uid: guid(),
-    type: type,
-  };
-};
+  switch( card.type ){
+    case CardType.Upgrade:
+      return renderUpgradeCard();
+    case CardType.Trading:
+      return renderTradingCard();
+    case CardType.Production:
+      return renderProductionCard();
+    default:
+      return (
+        <div />
+      )
+  }
+}
 
-const createVictoryCard = (points, costStr) => {
-  return {
-    uid: guid(),
-    points: points,
-    cost: stringToResourcesRecipe(costStr),
-  };
-};
+function ResourceCardSlots(props){
+  const board = props.board;
+  const cardList = board.resourceCardsLineUp.map((cardSlot) =>
+    <div
+      className='card-slot'
+      key={cardSlot.card.uid}
+    >
+        <ResourceCard
+          gameState={props.gameState}
+          key={cardSlot.card.uid}
+          card={cardSlot.card}
+          onClick={() => props.onCardClicked(cardSlot.card.uid)}
+        />
+        <div className='bonus-resources'>
+          <ResourcesRecipe
+            value={cardSlot.resources}
+          />
+        </div>
+    </div>
+  );
 
-//=====================
-// Game:Init
-//=====================
-const PlayerStartingHand = () => [
-  createUpgradeCard(2),
-  createProductionCard('YY'),
-];
-const AllResourceCards = [].concat(
-  ResourcesCardsData[CardType.Production].map(p => createProductionCard(p))
-).concat(
-  ResourcesCardsData[CardType.Upgrade].map(u => createUpgradeCard(u))
-).concat(
-  ResourcesCardsData[CardType.Trading].map(t => createTradingCard(t[0], t[1]))
-);
+  return (
+    <div className="resources-board">
+      <h1>Resource Cards</h1>
+      <div className="card-list">
+        {cardList}
+      </div>
+    </div>
+  );
+}
 
-const AllVictoryCards = Object.entries(VictoryCardsData).map(
-  (data) => createVictoryCard(data[1], data[0])
-);
+function PlayerHand(props){
+  const player = props.player;
+  return (
+    <div className='player-hand'>
+      {player.hand.map((card) =>
+        <ResourceCard
+          gameState={props.gameState}
+          key={card.uid}
+          card={card}
+          onClick={() => props.onCardClicked(card.uid)}
+        />
+      )}
+    </div>
+  );
+}
 
-const createPlayer = (name, turnOrder) => {
-  return {
-    uid: guid(),
-    name: name,
-    hand: PlayerStartingHand(),
-    discardPile: [],
-    victoryCards: [],
-    resources: stringToResources(PlayerStartingResources(turnOrder)),
-    coins: {
-      gold: 0,
-      silver: 0
-    },
-  };
-};
+function PlayerResources(props){
+  const player = props.player;
+  return (
+      <div className='player-resources'>
+      <Resources
+        gameState={props.gameState}
+        value={player.resources}
+        onResourceClicked={props.onResourceClicked}
+      />
+    </div>
+  );
+}
 
-const createGameBoard = (numPlayers) => {
-  let gameBoard = {
-    resourceCardsDeck: [],
-    resourceCardsLineUp: [],
-    victoryCardsDeck: [],
-    victoryCardsLineUp: [],
-    coins: {
-      gold: StartingVictoryCoins(numPlayers),
-      silver: StartingVictoryCoins(numPlayers),
-    },
-  };
+function Player(props) {
+  let classNames = ['player'];
+  if( props.selected ){
+    classNames.push('selected');
+  }else{
+    classNames.push('not-selected');
+  }
+  const player = props.value;
 
-  let victoryCards = drawCards(shuffleDeck(AllVictoryCards), VictoryCardsLineUpSize);
-  gameBoard.victoryCardsDeck = victoryCards.deck;
-  gameBoard.victoryCardsLineUp = victoryCards.cards;
+  return (
+    <div className={classNames.join(' ')}>
+      <div className='header'>
+        <div className='name'>
+          {player.name}
+        </div>
+        <div className='player-vp'>
+          <div className='vp-cards'>
+            <div className='score'>
+              {player.victoryCards.length}
+            </div>
+          </div>
+          <div className='coin gold'>
+            <div className='score'>
+              {player.coins.gold}
+            </div>
+          </div>
+          <div className='coin silver'>
+            <div className='score'>
+              {player.coins.silver}
+            </div>
+          </div>
+        </div>
+      </div>
+      <PlayerResources
+        gameState={props.gameState}
+        player={player}
+        onResourceClicked={props.onResourceClicked}
+      />
+    </div>
+  );
+}
 
-  let resourceCards = drawCards(shuffleDeck(AllResourceCards), ResourceCardsLineUpSize);
-  gameBoard.resourceCardsDeck = resourceCards.deck;
-  gameBoard.resourceCardsLineUp = [];
-  for (let i = 0; i < resourceCards.cards.length; i++) {
-    gameBoard.resourceCardsLineUp.push({
-      card: resourceCards.cards[i],
-      resources: createResourceRecipe(),
+function Players(props){
+  const playerList = props.players.map((p, index) =>
+    <Player
+      gameState={props.gameState}
+      value={p}
+      key={p.name}
+      selected={props.gameState.game.activePlayerIndex === index}
+      onResourceClicked={props.onResourceClicked}
+    />
+  );
+  return (
+      <div className='player-list'>
+        {playerList}
+      </div>
+  );
+}
+
+function ActionBar(props){
+
+  const [lastKnownAction, setLastKnownAction] = React.useState(null);
+  const currentAction = props.currentAction;
+  const shouldScrollToTop = currentAction !== lastKnownAction;
+  React.useEffect(() => {
+    if( shouldScrollToTop ){
+     window.scrollTo(0, 0)
+     setLastKnownAction(currentAction);
+    }
+  }, [shouldScrollToTop,currentAction,setLastKnownAction]);
+
+
+  // TODO render non-active player
+  function renderInitState(){
+    const canRest = GameEngine.getActivePlayer(props.gameState.game).discardPile.length > 0;
+    return (
+      <div className="action-content">
+        <div className='message'>
+          <b>Claim</b> a Victory Card OR <b>Buy</b> a Resource Card OR <b>Use</b> a Resource Card
+        </div>
+        {canRest?
+          <div className='action-button' onClick={props.onPlayerRests}>Rest</div>
+          :<div />}
+      </div>
+    );
+  }
+  function renderDiscardResourcesState(){
+    const activePlayer = GameEngine.getActivePlayer(props.gameState.game);
+    const resourcesToDiscard = activePlayer.resources.length - PlayerMaxResources;
+    return (
+      <div className="action-content">
+          <div className='message'>
+            You need to <b>Discard {resourcesToDiscard}</b> resources
+          </div>
+      </div>
+    );
+  }
+  function renderSelectResourceUpgradeState(){
+    return (
+      <div className="action-content">
+          <div className='message'>
+            You can do up to <b>{props.gameState.currentActionData.numUpgradesRemaining} resource</b> upgrades
+          </div>
+          <div className='action-button' onClick={props.onPlayerPass}>Pass</div>
+      </div>
+    );
+  }
+  function renderPayResourceCardState(){
+    let activePlayer = GameEngine.getActivePlayer(props.gameState.game);
+    let numResourcesSelected = 0;
+    for( let resource of activePlayer.resources ){
+        if( isEntitySelected(props, resource.uid) ){
+          numResourcesSelected++;
+        }
+    }
+    const numResourcesToSelect = Math.abs(props.gameState.currentActionData.numResourcesForPayment - numResourcesSelected);
+    return (
+      <div className="action-content">
+          <div className='message'>
+            You need to select <b>{numResourcesToSelect} resource(s)</b> to pay for the cards before the selected one
+          </div>
+          <div className='action-button' onClick={props.onCancelPlayerAction}>Cancel</div>
+      </div>
+    );
+  }
+
+  function renderActionContent(){
+    if( currentAction === null ){
+      return renderInitState();
+    }
+
+    switch( currentAction ){
+      case GameActions.DiscardResources:
+        return renderDiscardResourcesState();
+      case GameActions.SelectResourceUpgrade:
+        return renderSelectResourceUpgradeState();
+      case GameActions.PayResourceCard:
+        return renderPayResourceCardState();
+      default:
+        return <div />; // should not happen
+    }
+  }
+
+  const lastTurnClassNames = ['last-turn-message'];
+  if( props.gameState.lastTurnStartingPlayer !== null ){
+    lastTurnClassNames.push('active');
+  }else{
+    lastTurnClassNames.push('inactive');
+  }
+
+  return (
+    <div id='action-bar'>
+      <div className={lastTurnClassNames.join(' ')}>Last Turn</div>
+      {renderActionContent()}
+    </div>
+  );
+}
+
+function PlayerScore(props){
+  const player = props.player;
+  const score = props.score;
+  const classNames = ['player-score'];
+  if( props.isWinner ){
+    classNames.push(['winner']);
+  }
+
+  return (
+    <div className={classNames.join(' ')}>
+      <div className='name'>{player.name}</div>
+      <div className='score'>
+        <div className='score-total'>Total: <span>{score.total}</span></div>
+        <div className='score-from-cards'>Victory cards: <span>{score.victoryCards}</span></div>
+        <div className='score-from-coins'>Coins: <span>{score.coins}</span></div>
+        <div className='score-from-resources'>Resources: <span>{score.resources}</span></div>
+      </div>
+    </div>
+  );
+}
+
+function EndGameScoring(props) {
+  const players = props.players;
+  let scores = [];
+  let winner = null;
+  for( const player of players ){
+    const playerScore =  GameEngine.getPlayerScore(player);
+    // tie-breaker is winner is last to play
+    if( winner === null || playerScore.total >= winner.score ){
+      winner = {
+        uid: player.uid,
+        score: playerScore.total,
+      };
+    }
+    scores.push({
+      player: player,
+      score:playerScore,
     });
   }
-  return gameBoard;
-};
 
-const createGame = (playerNames) => {
-  let players = [];
-  for (let turnOrder = 0; turnOrder < playerNames.length; turnOrder++) {
-    players.push(createPlayer(playerNames[turnOrder], turnOrder));
-  }
-  return {
-    activePlayerIndex: 0,
-    players: players,
-    board: createGameBoard(players.length),
-  };
-};
-
-//=====================
-// Game:Play
-//=====================
-const discardResource = (resources, uid) => {
-  let resIndex = resources.findIndex((r) => r.uid === uid);
-  if (resIndex === -1) {
-    console.log('Resource not found');
-    return false;
-  }
-  let outResources = copy(resources);
-  outResources.splice(resIndex, 1);
-  return outResources;
-};
-
-// Returns false if upgrade is not possible
-const upgrade = (resources, resourceId, upgradeCount = 1) => {
-  let resIndex = resources.findIndex((r) => r.uid === resourceId);
-  if (resIndex === -1) {
-    console.log('Resource not found');
-    return false;
-  }
-  let res = resources[resIndex];
-  // check if the new position is beyond the resources list
-  let resOrder = ResourceOrder.findIndex((r) => r === res.type);
-  if (resOrder === -1) {
-    console.log('Invalid resource');
-    return false;
-  }
-  let resNewOrder = resOrder + upgradeCount;
-  if (resNewOrder >= ResourceOrder.length) {
-    console.log(res.type + ' cannot be upgraded further');
-    return false;
+  let scoresUi = [];
+  for( const score of scores ){
+    scoresUi.push(
+      <PlayerScore
+        key={score.player.uid}
+        player={score.player}
+        score={score.score}
+        isWinner={winner.uid===score.player.uid}
+      />
+    );
   }
 
-  // all legit, perform
-  let output = copy(resources);
-  output[resIndex].type = ResourceOrder[resNewOrder];
-  console.log('Upgraded ' + res.type + ' to ' + output[resIndex].type);
-  return output;
-};
+  return (
+    <div className='end-game'>
+      <div className='end-game-content'>
+        <div id='game-logo' />
+        <div className='title'>End Game Scoring</div>
+        {scoresUi}
+      </div>
+    </div>
+  );
+}
 
-const produce = (resources, productionRecipe, numOfTimes = 1) => {
-  let output = copy(resources);
-  for (let i = 0; i < numOfTimes; i++) {
-    const producedResources = resourcesRecipeToResources(productionRecipe);
-    output = output.concat(producedResources);
+function GameLog(props){
+  const history = props.history;
+  const entries = [
+    [
+      <div className='turn-entry' key={'turn_start'}>
+        <span className='turn'>Game Start</span>
+      </div>
+    ]
+  ];
+  let lastTurn = -1;
+  for( const entry of history ){
+    const key = entry.turn+'_'+entry.playerId;
+    if( entry.turn !== lastTurn ){
+      lastTurn = entry.turn;
+      entries.unshift([
+        <div className='turn-entry' key={'turn_'+lastTurn}>
+          Turn <span className='turn'>{lastTurn+1}</span>
+        </div>
+      ]);
+    }
+    const classNames = ['entry'];
+    if( entry.isVpCard ){
+      classNames.push('vp');
+    }
+    entries[0].push(
+      <div className={classNames.join(' ')} key={key}>
+        <span className='player-name'>{entry.playerName}</span>
+        <span className='action'>{entry.action}</span>
+      </div>
+    );
   }
-  return output;
-};
+  return (
+    <div className='game-log'>
+      <div className='title'>Moves history</div>
+      <div className='entries'>
+        {entries.map(e => e.map(e2 => e2))}
+      </div>
+    </div>
+  );
+}
 
-// Returns false if not enough resources to consume
-const consume = (resources, costRecipe, numOfTimes = 1) => {
-  let output = copy(resources);
-  for (const type of ResourceOrder) {
-    const quantity = numOfTimes * costRecipe[type] || 0;
-    for (let i = 0; i < quantity; i++) {
-      let resIndex = output.findIndex(r => r.type === type);
-      if (resIndex === -1) {
-        console.log('Not enough ' + type + ' to consume');
-        return false;
+class Game extends React.Component {
+  constructor(props){
+    super(props);
+    this.onVictoryCardClicked = this.onVictoryCardClicked.bind(this);
+    this.onResourceCardClicked = this.onResourceCardClicked.bind(this);
+    this.onActivePlayerCardClicked = this.onActivePlayerCardClicked.bind(this);
+    this.onActivePlayerResourceClicked = this.onActivePlayerResourceClicked.bind(this);
+    this.onCancelPlayerAction = this.onCancelPlayerAction.bind(this);
+    this.onPlayerPass = this.onPlayerPass.bind(this);
+    this.onPlayerRests = this.onPlayerRests.bind(this);
+    this.dismissError = this.dismissError.bind(this);
+
+    this.state = {
+      game: GameEngine.createGame(['yohan','claire','weesiong']),
+      turn: 0,
+      error: null,
+      history: [],
+      selectedUids: {},
+      currentAction: null,
+      currentActionData: null,
+      lastTurnStartingPlayer: null,
+    };
+  }
+
+  updateState(newState){
+    // TODO firebase update
+    this.setState(newState);
+  }
+
+  copyState(state){
+    const newState = GameEngine.copy(state||this.state);
+    newState.error = null;
+    return newState;
+  }
+
+  dismissError(error){
+    if( this.state.error === null ){
+      return;
+    }
+    if( error && error.uid !== this.state.error.uid ){
+      return;
+    }
+    const newState = this.copyState();
+    newState.error = null;
+    this.updateState(newState);
+  }
+
+  showError(errorMessage){
+    const newState = this.copyState();
+    newState.error = {
+      uid: GameEngine.guid(),
+      message: errorMessage,
+    };
+    this.updateState(newState);
+  }
+
+  createLog(state, player, action, isVpCard=false){
+      return {
+        turn: state.turn,
+        playerId: player.uid,
+        playerName: player.name,
+        action: action,
+        isVpCard: !!isVpCard,
+      };
+  }
+
+  onVictoryCardClicked(cardId){
+    const newState = this.copyState();
+    if( newState.currentAction !== null ){
+      return;
+    }
+    console.log("Victory Card Clicked", cardId);
+    // claim the card if possible
+    let activePlayer = GameEngine.getActivePlayer(newState.game);
+    let result = GameEngine.playerBuyVictoryCard(activePlayer, newState.game.board, cardId);
+    if( result === false ){
+      this.showError('Not enough resources to claim this card');
+      return;
+    }
+    newState.game.players[newState.game.activePlayerIndex] = result.player;
+    newState.game.board = result.board;
+    newState.history.push(this.createLog(newState, activePlayer, 'claimed VPs', true));
+    this.endTurn(newState);
+  }
+  onResourceCardClicked(cardId){
+    // Set default action when clicked to playing a resource card
+    const newState = this.copyState();
+    if( newState.currentAction !== null ){
+      return;
+    }
+    console.log("Resource Card Clicked", cardId);
+    let activePlayer = GameEngine.getActivePlayer(newState.game);
+    // check if it's the first card, first is free, have to pay for others.
+    let selectedCardIndex = newState.game.board.resourceCardsLineUp.findIndex(c => c.card.uid === cardId);
+    if( selectedCardIndex === -1 ){
+      this.showError('Invalid card picked, pick another one');
+      return;
+    } else if( selectedCardIndex === 0 ){
+      // all good can claim for free
+      let result = GameEngine.playerBuyResourceCard(activePlayer, newState.game.board, cardId, []);
+      if( result === false ){
+        this.showError('Not enough resources to pay for this card');
+        return;
       }
-      output.splice(resIndex, 1);
+      newState.game.players[newState.game.activePlayerIndex] = result.player;
+      newState.game.board = result.board;
+      newState.history.push(this.createLog(newState, activePlayer, 'bought a card'));
+      this.endTurn(newState);
+      return;
+    }else{
+      newState.currentActionData = {
+        cardId: cardId,
+        numResourcesForPayment: selectedCardIndex,
+      };
+      newState.currentAction = GameActions.PayResourceCard;
+      newState.selectedUids[cardId] = true;
+      this.updateState(newState);
+      return;
     }
   }
-  return output;
-};
-
-const buyVictoryCard = (resources, card) => {
-  console.log('Buying a ' + card.points + ' VP card');
-  return consume(resources, card.cost);
-};
-
-const playProductionCard = (resources, card) => {
-  console.log('Playing ' + CardType.Production + ' card');
-  if (card.type !== CardType.Production) {
-    console.log('Not a ' + CardType.Production + ' card: ' + (card.type));
-    return false;
+  onActivePlayerCardClicked(cardId){
+    const newState = this.copyState();
+    if( newState.currentAction !== null ){
+      return;
+    }
+    let activePlayer = GameEngine.getActivePlayer(newState.game);
+    let selectedCard = GameEngine.playerFindCard(activePlayer, cardId);
+    if (selectedCard === false) {
+      return;
+    }
+    switch (selectedCard.type) {
+      case CardType.Production:
+        activePlayer = GameEngine.playerPlayProductionCard(activePlayer, cardId);
+        if (activePlayer === false) {
+          this.showError('Cannot play this card now, pick another one.');
+          return;
+        }
+        newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+        newState.history.push(this.createLog(newState, activePlayer, 'produced'));
+        this.endTurn(newState);
+        break;
+      case CardType.Trading:
+        let selection = prompt("How many trades", "1");
+        if( selection === null ){
+          return;
+        }
+        let numTrades = parseInt(selection);
+        if( numTrades <= 0 ){
+          return;
+        }
+        activePlayer = GameEngine.playerPlayTradingCard(activePlayer, cardId, numTrades);
+        if (activePlayer === false) {
+          this.showError('Invalid trade, check your resources and try again.');
+          return;
+        }
+        newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+        newState.history.push(this.createLog(newState, activePlayer, 'traded'));
+        this.endTurn(newState);
+        break;
+      case CardType.Upgrade:
+        newState.currentActionData = {
+          cardId: cardId,
+          numUpgradesRemaining: selectedCard.upgradeCount,
+        };
+        newState.selectedUids[cardId] = true;
+        newState.currentAction = GameActions.SelectResourceUpgrade;
+        this.updateState(newState);
+        break;
+      default:
+        this.showError('Invalid card, pick another one');
+        return;
+    }
   }
-  return produce(resources, card.production);
-};
+  onActivePlayerResourceClicked(resourceId){
+    const newState = this.copyState();
+    // check that the resource belongs to the player
+    let activePlayer = GameEngine.getActivePlayer(newState.game);
+    if( activePlayer.resources.findIndex(r=>r.uid===resourceId) === -1){
+      this.showError('You can only select your own resources');
+      return;
+    }
 
-const playTradingCard = (resources, card, numOfTimes = 1) => {
-  console.log('Playing ' + CardType.Trading + ' card');
-  if (card.type !== CardType.Trading) {
-    console.log('Not a ' + CardType.Trading + ' card: ' + (card.type));
-    return false;
-  }
-  let output = consume(resources, card.cost, numOfTimes);
-  if (output === false) {
-    return false;
-  }
-  return produce(output, card.production, numOfTimes);
-};
-
-const playUpgradeCard = (resources, card, resourceId) => {
-  console.log('Playing ' + CardType.Upgrade + ' card');
-  if (card.type !== CardType.Upgrade) {
-    console.log('Not a ' + CardType.Upgrade + ' card: ' + (card.type));
-    return false;
-  }
-  // Upgrade resources
-  return upgrade(resources, resourceId, /*upgradeCount=*/ 1);
-};
-
-const getActivePlayer = (game) => {
-  return game.players[game.activePlayerIndex];
-};
-
-const playerFindCard = (player, cardUid) => {
-  let index = player.hand.findIndex((c) => c.uid === cardUid);
-  if (index === -1) {
-    console.log("Card not found", cardUid);
-    return false;
-  }
-  return player.hand[index];
-};
-
-const playerDiscardCard = (player, cardUid) => {
-  let index = player.hand.findIndex((c) => c.uid === cardUid);
-  if (index === -1) {
-    console.log("Card not found", cardUid);
-    return false;
-  }
-  let outPlayer = copy(player);
-  let discardedCard = outPlayer.hand[index];
-  outPlayer.hand.splice(index, 1);
-  outPlayer.discardPile.push(discardedCard);
-  return outPlayer;
-};
-
-//=====================
-// Game:Sequencing
-//=====================
-const playerPlayProductionCard = (player, cardUid) => {
-  player = copy(player);
-  let card = playerFindCard(player, cardUid);
-  if (card === false) {
-    return false;
-  }
-  // play the card
-  player.resources = playProductionCard(player.resources, card);
-  if (player.resources === false) {
-    return false;
-  }
-  // move the card to the discard pile
-  return playerDiscardCard(player, cardUid);
-};
-
-const playerPlayTradingCard = (player, cardUid, numTrades) => {
-  player = copy(player);
-  let card = playerFindCard(player, cardUid);
-  if (card === false) {
-    return false;
-  }
-  // play the card
-  player.resources = playTradingCard(player.resources, card, numTrades);
-  if (player.resources === false) {
-    return false;
-  }
-  // move the card to the discard pile
-  return playerDiscardCard(player, cardUid);
-};
-
-const playerPlayUpgradeCard = (player, cardUid, resourceId) => {
-  player = copy(player);
-  let card = playerFindCard(player, cardUid);
-  if (card === false) {
-    return false;
-  }
-  // play the card
-  player.resources = playUpgradeCard(player.resources, card, resourceId);
-  if (player.resources === false) {
-    return false;
-  }
-  // don't discard upgrades can be done multiple times asynchronously
-  return player;
-};
-
-// resourcesPayment is an array of resource positions
-const playerBuyResourceCard = (player, board, cardUid, paymentResIds) => {
-
-  player = copy(player);
-  board = copy(board);
-  paymentResIds = copy(paymentResIds);
-
-  // first check if the card exists in the line-up
-  let cardIndex = board.resourceCardsLineUp.findIndex((c) => c.card.uid === cardUid);
-  if (cardIndex === -1) {
-    console.log("Card not found");
-    return false;
-  }
-  // check if the user has provided enough payment for it by providing resources
-  if (paymentResIds.length < cardIndex) {
-    console.log("Not enough payment provided");
-    return false;
-  }
-
-  // use the payment to pay for the cards before the one the user wants in the list
-  for (let cardPosition = 0; cardPosition < board.resourceCardsLineUp.length; cardPosition++) {
-    let cardSlot = board.resourceCardsLineUp[cardPosition];
-    if (cardSlot.card.uid !== cardUid) {
-      // need to pay, take the resource from the user and add it to the card
-      let paymentResId = paymentResIds[cardPosition];
-      let paymentResIndex = player.resources.findIndex((r) => r.uid === paymentResId);
-      if (paymentResIndex === -1) {
-        console.log('Resource not found for payment');
+    if( newState.currentAction === GameActions.DiscardResources ){
+      activePlayer = GameEngine.playerDiscardResource(activePlayer, resourceId);
+      if( activePlayer === false ){
+        this.showError('You can only select your own resources');
+        return;
       }
-      let paymentResType = player.resources[paymentResIndex].type;
-      player.resources = discardResource(player.resources, paymentResId);
-      if (player.resources === false) {
-        return false;
+      newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+      if( activePlayer.resources.length <= PlayerMaxResources ){
+        this.endTurn(newState);
+      }else{
+        this.updateState(newState);
       }
-      cardSlot.resources = addResourceToRecipe(cardSlot.resources, paymentResType);
-      console.log("Player paid a " + paymentResType + " on card " + (cardPosition + 1));
-    } else {
-      // remove the card from the slot
-      // put into the hand
-      // give associated resources to the player (if any)
-      // draw another card if possible to refill the lineup
-      board.resourceCardsLineUp.splice(cardPosition, 1);
-      player.hand.push(cardSlot.card);
-      player.resources = produce(player.resources, cardSlot.resources);
-      let drawResult = drawCards(board.resourceCardsDeck, /*numberOfCardsToDraw=*/ 1);
-      if (drawResult.cards.length === 0) {
-        break; // no more cards to draw
+      return;
+    }
+    if( newState.currentAction === GameActions.SelectResourceUpgrade ){
+      let activePlayer = GameEngine.getActivePlayer(newState.game);
+      activePlayer = GameEngine.playerUpgradeResource(activePlayer, resourceId);
+      if( activePlayer === false ){
+        this.showError('This resource cannot be upgraded further');
+        return;
       }
-      board.resourceCardsDeck = drawResult.deck;
-      board.resourceCardsLineUp.push({
-        card: drawResult.cards[0],
-        resources: createResourceRecipe(),
-      });
-      break;
+      newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+      newState.currentActionData.numUpgradesRemaining--;
+      if( newState.currentActionData.numUpgradesRemaining === 0 ){
+        this.onPlayerPass(newState);
+      }else{
+        this.updateState(newState);
+      }
+      return;
+    }
+    if( newState.currentAction === GameActions.PayResourceCard ){
+      if( newState.selectedUids[resourceId] === true ){
+        newState.selectedUids[resourceId] = false;
+      }else {
+        newState.selectedUids[resourceId] = true;
+      }
+      // check if there are enough resources selected to pay.
+      let activePlayer = GameEngine.getActivePlayer(newState.game);
+      let payment = [];
+      for( let res of activePlayer.resources ){
+        if( newState.selectedUids[res.uid] === true ){
+          payment.push(res.uid);
+        }
+      }
+      if( payment.length < newState.currentActionData.numResourcesForPayment ){
+        this.updateState(newState);
+        return;
+      }
+      // Execute the action
+      let result = GameEngine.playerBuyResourceCard(activePlayer, newState.game.board, newState.currentActionData.cardId, payment);
+      if( result === false ){
+        this.showError('Not enough resources for paying for this card');
+        return;
+      }
+      newState.game.players[newState.game.activePlayerIndex] = result.player;
+      newState.game.board = result.board;
+      newState.history.push(this.createLog(newState, activePlayer, 'bought a card'));
+      this.endTurn(newState);
+      return;
     }
   }
 
-  return {
-    player: player,
-    board: board,
-  };
-};
+  endTurn(state){
+    const newState = this.copyState(state);
+    const activePlayer = GameEngine.getActivePlayer(newState.game);
+    // check if the active player has too many resources and should discard
+    if( activePlayer.resources.length > PlayerMaxResources){
+      newState.currentAction = GameActions.DiscardResources;
+      this.updateState(newState);
+      return;
+    }
 
-const playerBuyVictoryCard = (player, board, cardUid) => {
-  player = copy(player);
-  board = copy(board);
-  // first check if the card exists in the line-up
-  let cardIndex = board.victoryCardsLineUp.findIndex((c) => c.uid === cardUid);
-  if (cardIndex === -1) {
-    console.log("Card not found");
-    return false;
-  }
-  let card = board.victoryCardsLineUp.splice(cardIndex, 1)[0];
-  player.resources = buyVictoryCard(player.resources, card);
-  if (player.resources === false) {
-    return false;
-  }
-  player.victoryCards.push(card);
-  // add coins if any.
-  // gold coin to first slot, silver to second.
-  // if ran out of gold coins, take a silver.
-  if (cardRewardsGoldCoin(board, cardIndex)) {
-    board.coins.gold--;
-    player.coins.gold++;
-    console.log("Player collects a gold coin");
-  } else if (cardRewardsSilverCoin(board, cardIndex)) {
-    board.coins.silver--;
-    player.coins.silver++;
-    console.log("Player collects a silver coin");
-  }
-  // refill the line-up
-  let drawResult = drawCards(board.victoryCardsDeck, /*numberOfCardsToDraw=*/ 1);
-  board.victoryCardsDeck = drawResult.deck;
-  board.victoryCardsLineUp = board.victoryCardsLineUp.concat(drawResult.cards);
-  return {
-    board: board,
-    player: player,
-  }
-};
+    newState.currentAction = null;
+    newState.selectedUids = {};
+    newState.currentActionData = null;
 
-// Rest recovers all cards from discard pile into the hand
-const playerRests = (player) => {
-  player = copy(player);
-  let result = transferAllCards(player.discardPile, player.hand);
-  player.discardPile = result.deckFrom;
-  player.hand = result.deckTo;
-  return player;
+    const game = newState.game;
+    // check if the game is on it's last turn
+    // (if the active player has reached number of cards)
+    if( newState.lastTurnStartingPlayer === null
+        && activePlayer.victoryCards.length >= PlayerMaxVictoryCards){
+      newState.lastTurnStartingPlayer = game.activePlayerIndex;
+    }
+    game.activePlayerIndex = (game.activePlayerIndex + 1) % game.players.length;
+    // increase turn count when it's first player's turn again
+    if( game.activePlayerIndex === 0 ){
+      newState.turn++;
+    }
+    this.updateState(newState);
+  }
+
+  onCancelPlayerAction(){
+    const newState = this.copyState();
+    newState.currentAction = null;
+    newState.selectedUids = {};
+    this.updateState(newState);
+  }
+
+  onPlayerPass(state){
+    if( state.currentAction === GameActions.SelectResourceUpgrade ){
+      const newState = this.copyState(state);
+      let activePlayer = GameEngine.getActivePlayer(newState.game);
+      console.log("No more upgrades, discard the card", activePlayer);
+      activePlayer = GameEngine.playerDiscardCard(activePlayer, newState.currentActionData.cardId);
+      if (activePlayer === false) {
+        this.showError('Error discarding this card');
+        return;
+      }
+      newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+      newState.history.push(this.createLog(newState, activePlayer, 'upgraded'));
+      this.endTurn(newState);
+      return;
+    }
+  }
+
+  onPlayerRests(){
+    const newState = this.copyState();
+    let activePlayer = GameEngine.getActivePlayer(newState.game);
+    activePlayer = GameEngine.playerRests(activePlayer);
+    newState.game.players[newState.game.activePlayerIndex] = activePlayer;
+    newState.history.push(this.createLog(newState, activePlayer, 'rested'));
+    this.endTurn(newState); // nothing async, end the action
+  }
+
+  render() {
+    if(this.state.lastTurnStartingPlayer === this.state.game.activePlayerIndex ){
+      return (
+        <EndGameScoring players={this.state.game.players} />
+      );
+    }
+    const error = this.state.error;
+    if( error !== null ){
+      setTimeout(() =>  this.dismissError(error), 3000);
+    }
+
+    return (
+      <div id="game">
+        <div id='error' className={error !== null?'active':'inactive'}>
+          <span
+            className='dismiss'
+            onClick={()=>this.dismissError()}>&times;</span>
+            {error !== null ? error.message:''}
+        </div>
+        <div id='panel'>
+          <div id='game-logo' />
+          <Players
+            gameState={this.state}
+            players={this.state.game.players}
+            onResourceClicked={this.onActivePlayerResourceClicked}
+          />
+          <GameLog
+            gameState={this.state}
+            history={this.state.history}
+          />
+        </div>
+        <div id="game-board">
+          <ActionBar
+            gameState={this.state}
+            currentAction={this.state.currentAction}
+            onCancelPlayerAction={this.onCancelPlayerAction}
+            onPlayerPass={()=>this.onPlayerPass(this.state)}
+            onPlayerRests={this.onPlayerRests}
+          />
+          <PlayerHand
+            gameState={this.state}
+            player={GameEngine.getActivePlayer(this.state.game)}
+            onCardClicked={this.onActivePlayerCardClicked}
+          />
+          <VictoryCards
+            gameState={this.state}
+            board={this.state.game.board}
+            onCardClicked={this.onVictoryCardClicked}
+          />
+          <ResourceCardSlots
+            gameState={this.state}
+            board={this.state.game.board}
+            onCardClicked={this.onResourceCardClicked}
+          />
+        </div>
+      </div>
+    );
+  }
 }
 
-// Discard specified resources from player inventory
-const playerDiscardResource = (player, resourceId) => {
-  player = copy(player);
-  let resources = discardResource(player.resources, resourceId);
-  if (resources === false) {
-    return false;
-  }
-  player.resources = resources;
-  return player;
-}
-
-// Upgrade a specific resource once if possible
-const playerUpgradeResource = (player, resourceId) => {
-  player = copy(player);
-  let resources = upgrade(player.resources, resourceId);
-  if (resources === false) {
-    return false;
-  }
-  player.resources = resources;
-  return player;
-}
-
-// VP cards + points per resources + coins
-const getPlayerScore = (player) => {
-  let score = {
-    total: 0,
-    resources: 0,
-    victoryCards: 0,
-    coins: 0,
-  }
-  // Points for resources
-  for (let resource of player.resources) {
-    score.resources += ResourceVictoryPoints[resource] || 0;
-  }
-  score.total += score.resources;
-
-  // Points for victory cards
-  for (let card of player.victoryCards) {
-    score.victoryCards += card.points || 0;
-  }
-  score.total += score.victoryCards;
-
-  // Points for coins
-  score.coins += CoinsVictoryPoints.silver * player.coins.silver || 0;
-  score.coins += CoinsVictoryPoints.gold * player.coins.gold || 0;
-  score.total += score.coins;
-
-  return score;
-
-}
-
-export const GameEngine = {
-  copy: copy,
-  guid: guid,
-  createGame: createGame,
-  getPlayerScore: getPlayerScore,
-  getActivePlayer: getActivePlayer,
-  playerRests: playerRests,
-  playerBuyVictoryCard: playerBuyVictoryCard,
-  playerFindCard: playerFindCard,
-  playerPlayProductionCard: playerPlayProductionCard,
-  playerPlayTradingCard: playerPlayTradingCard,
-  playerPlayUpgradeCard: playerPlayUpgradeCard,
-  playerDiscardCard: playerDiscardCard,
-  playerDiscardResource: playerDiscardResource,
-  playerUpgradeResource: playerUpgradeResource,
-  playerBuyResourceCard: playerBuyResourceCard,
-  cardRewardsGoldCoin: cardRewardsGoldCoin,
-  cardRewardsSilverCoin: cardRewardsSilverCoin,
-};
+export default Game;
