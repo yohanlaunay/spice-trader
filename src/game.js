@@ -332,6 +332,7 @@ function Players(props){
 
 function ActionBar(props){
 
+  const activePlayer = GameEngine.getActivePlayer(props.gameState.session.game);
   const [lastKnownAction, setLastKnownAction] = React.useState(null);
   const currentAction = props.currentAction;
   const shouldScrollToTop = currentAction !== lastKnownAction;
@@ -342,6 +343,17 @@ function ActionBar(props){
     }
   }, [shouldScrollToTop,currentAction,setLastKnownAction]);
 
+  if( props.user.uid !== activePlayer.uid){
+    return (
+      <div id='action-bar'>
+        <div className="action-content">
+          <div className='message'>
+            Waiting for <b>{activePlayer.name}</b> to make their move.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // TODO render non-active player
   function renderInitState(){
@@ -358,7 +370,6 @@ function ActionBar(props){
     );
   }
   function renderDiscardResourcesState(){
-    const activePlayer = GameEngine.getActivePlayer(props.gameState.session.game);
     const resourcesToDiscard = activePlayer.resources.length - PlayerMaxResources;
     return (
       <div className="action-content">
@@ -379,7 +390,6 @@ function ActionBar(props){
     );
   }
   function renderPayResourceCardState(){
-    let activePlayer = GameEngine.getActivePlayer(props.gameState.session.game);
     let numResourcesSelected = 0;
     for( let resource of activePlayer.resources ){
         if( isEntitySelected(props, resource.uid) ){
@@ -556,6 +566,14 @@ class Game extends React.Component {
     }
   }
 
+  isGameReadOnly(){
+    const user = this.context;
+    const activePlayer = GameEngine.getActivePlayer(this.state.session.game);
+    return this.loading === true
+        || this.updating === true
+        || user.uid !== activePlayer.uid;
+  }
+
   componentWillMount(){
     require('./game.css');
   }
@@ -577,27 +595,26 @@ class Game extends React.Component {
       this.setState(newState);
       return;
     }
-    // TODO firebase update
-    // const gameRef = firestore.collection('games').doc(props.gameId);
-    // firestore.runTransaction(transaction => {
-    //   return transaction.get(gameRef).then(doc => {
-    //     if( ! doc.exists ){
-    //       throw new Error('Game deleted');
-    //     }
-    //     // TODO only active user can update
-    //     // if( user.uid !== doc.data().admin ){
-    //     //   throw new Error('Admin only');
-    //     // }
-    //     transaction.update(gameRef,{session: newState.session});
-    //     return newGuests;
-    //   });
-    // }).then(newGuests=>{
-    //   console.log('Invite successful', newGuests); // TODO
-    // }).catch(error => {
-    //   alert('Error adding player:'+error); // TODO
-    // });
-
-    this.setState(newState);
+    const user = this.context;
+    const gameRef = firestore.collection('games').doc(this.props.gameId);
+    firestore.runTransaction(transaction => {
+      return transaction.get(gameRef).then(doc => {
+        if( ! doc.exists ){
+          throw new Error('Game deleted');
+        }
+        transaction.update(gameRef,{session: newState.session});
+        return newState.session;
+      });
+    }).then(session => {
+      console.log('Game update successful');
+      newState.updating = false;
+      newState.session = session;
+      this.setState(newState);
+    }).catch(error => {
+      alert('Error updating game, please try again'); // TODO
+      newState.updating = false;
+      this.setState(newState);
+    });
   }
 
   copyState(state){
@@ -638,7 +655,7 @@ class Game extends React.Component {
   }
 
   onVictoryCardClicked(cardId){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     const newState = this.copyState();
@@ -659,7 +676,7 @@ class Game extends React.Component {
     this.endTurn(newState);
   }
   onResourceCardClicked(cardId){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     // Set default action when clicked to playing a resource card
@@ -698,7 +715,7 @@ class Game extends React.Component {
     }
   }
   onActivePlayerCardClicked(cardId){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     const newState = this.copyState();
@@ -754,7 +771,7 @@ class Game extends React.Component {
     }
   }
   onActivePlayerResourceClicked(resourceId){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     const newState = this.copyState();
@@ -828,7 +845,7 @@ class Game extends React.Component {
   }
 
   endTurn(state){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     const newState = this.copyState(state);
@@ -860,7 +877,7 @@ class Game extends React.Component {
   }
 
   onCancelPlayerAction(){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     const newState = this.copyState();
@@ -870,7 +887,7 @@ class Game extends React.Component {
   }
 
   onPlayerPass(state){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     if( state.session.currentAction === GameActions.SelectResourceUpgrade ){
@@ -890,7 +907,7 @@ class Game extends React.Component {
   }
 
   onPlayerRests(){
-    if( !!this.state.updating ){
+    if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
     const newState = this.copyState();
@@ -948,6 +965,7 @@ class Game extends React.Component {
         <div id="game-board">
           <ActionBar
             gameState={this.state}
+            user={this.context}
             currentAction={this.state.session.currentAction}
             onCancelPlayerAction={this.onCancelPlayerAction}
             onPlayerPass={()=>this.onPlayerPass(this.state)}
