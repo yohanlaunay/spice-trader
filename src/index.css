@@ -16,7 +16,7 @@ body {
 .resource.selected {
   border-spacing: 50px;
   border-radius: 10px;
-  background-color: rgba(128,128,128,0.85);
+  background-color: rgba(128, 128, 128, 0.85);
   background-size: 80%;
 }
 
@@ -70,12 +70,17 @@ body {
 }
 
 .card:hover {
- transform: scale(1.15,1.15);
+  transform: scale(1.15, 1.15);
 }
 
-
 .card.selected {
-  border: solid 10px red;
+  transform: scale(1.15, 1.15);
+  -webkit-filter: grayscale(100%);
+  -moz-filter: grayscale(100%);
+  -o-filter: grayscale(100%);
+  -ms-filter: grayscale(100%);
+  filter: grayscale(100%);
+  z-index: 1;
 }
 
 .card-type-production {
@@ -278,14 +283,15 @@ body {
   margin-bottom: 10px;
   width: 250px;
   padding: 4px;
-  background-color: rgba(128, 128, 128, 0.2);
 }
 
 .player.selected {
-  background-color: white;
-  border: solid 2px gold;
-  box-shadow: 0 4px 8px 0 gold;
   padding: 2px;
+  transform: scale(1.08, 1.08);
+}
+
+.player.not-selected {
+  background-color: rgba(128, 128, 128, 0.2);
 }
 
 .player .resource {
@@ -293,9 +299,8 @@ body {
   height: 32px;
 }
 
-
 .player.selected .resource:hover {
- transform: scale(1.15,1.15);
+  transform: scale(1.15, 1.15);
 }
 
 .player .header {
@@ -488,7 +493,7 @@ body {
   font-size: 24pt;
   color: red;
   font-weight: bold;
-  display:none;
+  display: none;
 }
 
 #action-bar .last-turn-message.active {

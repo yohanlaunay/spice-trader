@@ -274,6 +274,8 @@ function Player(props) {
   let classNames = ['player'];
   if( props.selected ){
     classNames.push('selected');
+  }else{
+    classNames.push('not-selected');
   }
   const player = props.value;
 
@@ -641,6 +643,7 @@ class Game extends React.Component {
         numResourcesForPayment: selectedCardIndex,
       };
       newState.currentAction = GameActions.PayResourceCard;
+      newState.selectedUids[cardId] = true;
       this.updateState(newState);
       return;
     }
