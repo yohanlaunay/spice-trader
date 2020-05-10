@@ -30,7 +30,7 @@ const GameSession = (props) => {
     firestore.runTransaction(transaction => {
       return transaction.get(gameRef).then(doc => {
         if( ! doc.exists ){
-          throw 'Game deleted';
+          throw new Error('Game deleted');
         }
         if( doc.data().owners.includes(email) ){
           return doc.data().owners;
@@ -47,6 +47,7 @@ const GameSession = (props) => {
   }
 
   function deleteGame(){
+    // TODO update state "deleting"
     firestore.collection('games').doc(gameId).delete()
     .then(()=>{
       console.log("Delete successful");
@@ -56,12 +57,12 @@ const GameSession = (props) => {
   }
 
   function joinGame(){
-    // TODO update state "inviting"
+    // TODO update state "joining"
     const gameRef = firestore.collection('games').doc(gameId);
     firestore.runTransaction(transaction => {
       return transaction.get(gameRef).then(doc => {
         if( ! doc.exists ){
-          throw 'Game deleted';
+          throw new Error('Game deleted');
         }
         if( doc.data().players.find(p => p.uid === user.uid) ){
           return doc.data().players;
@@ -87,9 +88,8 @@ const GameSession = (props) => {
   }
 
   function renderGameWaitingForPlayers(){
-    let playersUi = [];
-    gameData.players.forEach(player => {
-      playersUi.push(
+    let playersUi = gameData.players.forEach(player => {
+      return (
         <div className='player' key={player.uid}>
           <img src={player.img} width='48px' height='48px' /><br />
           Name: {player.name}<br />
@@ -207,11 +207,10 @@ const GameSessionList = (props) => {
 
   // TODO check player status
 
-  const games = [];
-  Object.entries(gameList.games).map(data => {
+  const games = Object.entries(gameList.games).map(data => {
     const gameId = data[0];
     const gameData = data[1];
-    games.push(
+    return (
       <GameSession
         key={gameId}
         user={user}
