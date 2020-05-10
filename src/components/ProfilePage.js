@@ -4,11 +4,6 @@ import {auth, firestore} from "../firebase";
 import GameEngine from "../game-engine.js";
 import {MaxPlayerCount, MinPlayerCount} from "../game-data.js";
 
-const GameSessionStatus = {
-  WAITING_FOR_PLAYERS: 'WAITING_FOR_PLAYERS',
-  STARTED: 'STARTED',
-};
-
 const GameSession = (props) => {
   const gameId = props.gameId;
   const gameData = props.gameData;
@@ -74,7 +69,6 @@ const GameSession = (props) => {
     return (
       <div className='game'>
         Game Id: {gameId}<br />
-        Status: {GameSessionStatus[gameData.status]}<br />
         Confirmed Players: <br />
         {playersUi}
         Invited Players: <br />
@@ -103,7 +97,7 @@ const GameSession = (props) => {
       actions.push(
         <div className='action play'
           key='action-play'
-          onClick={() => props.playGame(gameId)}>Join</div>
+          onClick={() => props.playGame(gameId)}>Play</div>
       );
       // [Admin only]
       if( isGameAdmin ){
@@ -118,7 +112,6 @@ const GameSession = (props) => {
     return (
       <div className='game'>
         Game Id: {gameId}<br />
-        Status: {GameSessionStatus[gameData.status]}<br />
         Players: <br />
         {playersUi}
         {actions}
@@ -126,14 +119,10 @@ const GameSession = (props) => {
     );
   }
 
-  switch( gameData.status ){
-    case GameSessionStatus.STARTED:
-      return renderStartedGame();
-    case GameSessionStatus.WAITING_FOR_PLAYERS:
-      return renderGameWaitingForPlayers();
-    default:
-      return <div />;
+  if( gameData.game === null ){
+    return renderGameWaitingForPlayers();
   }
+  return renderStartedGame();
 };
 
 const GameSessionList = (props) => {
@@ -160,6 +149,7 @@ const GameSessionList = (props) => {
         startGame={props.startGame}
         invitePlayer={props.invitePlayer}
         deleteGame={props.deleteGame}
+        playGame={props.playGame}
       />
     );
   });
@@ -184,6 +174,7 @@ class ProfilePage extends React.Component {
     this.joinGame = this.joinGame.bind(this);
     this.startGame = this.startGame.bind(this);
     this.createGame = this.createGame.bind(this);
+    this.playGame = this.playGame.bind(this);
 
     this.state = {
       gameList: {
@@ -225,6 +216,9 @@ class ProfilePage extends React.Component {
   }
 
   deleteGame(gameId){
+    if( window.confirm('Are you sure you want to delete the game?') !== true ){
+      return;
+    }
     // TODO update state "deleting"
     firestore.collection('games').doc(gameId).delete()
     .then(()=>{
@@ -266,7 +260,6 @@ class ProfilePage extends React.Component {
     console.log("Create Game");
     const user = this.context;
      firestore.collection('games').add({
-       status: GameSessionStatus.WAITING_FOR_PLAYERS,
        guests: [user.email],
        admin: user.uid,
        players: [{
@@ -285,7 +278,27 @@ class ProfilePage extends React.Component {
 
   startGame(gameId){
     const user = this.context;
-    // TODO
+    const gameRef = firestore.collection('games').doc(gameId);
+    firestore.runTransaction(transaction => {
+      return transaction.get(gameRef).then(doc => {
+        if( ! doc.exists ){
+          throw new Error('Game deleted');
+        }
+        const playerList = doc.data().players.map(p => p.name);
+        console.log(playerList);
+        const game = GameEngine.createGame(playerList);
+        transaction.update(gameRef,{game: game});
+        return game;
+      });
+    }).then(game => {
+      console.log('Game started', game); // TODO
+    }).catch(error => {
+      alert('Error creating game', error); // TODO
+    });
+  }
+
+  playGame(gameId){
+    // TODO route
   }
 
   componentDidMount() {
@@ -335,6 +348,7 @@ class ProfilePage extends React.Component {
           invitePlayer={this.invitePlayer}
           deleteGame={this.deleteGame}
           createGame={this.createGame}
+          playGame={this.playGame}
         />
       </div>
     )
