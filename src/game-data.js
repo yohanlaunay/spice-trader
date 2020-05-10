@@ -19,13 +19,15 @@ export const CoinsVictoryPoints = {
   silver: 1
 };
 
+export const MinPlayerCount = 2;
+export const MaxPlayerCount = 5;
 export const PlayerMaxResources = 10;
 export const PlayerMaxVictoryCards = 5;
 export const ResourceCardsLineUpSize = 6;
 export const VictoryCardsLineUpSize = 5;
 export const StartingVictoryCoins = (numPlayers) => numPlayers * 2;
 export const PlayerStartingResources = (playerPosition) => [
-  'YYY', 'YYYY', 'YYYY', 'YYYR',
+  'YYY', 'YYYY', 'YYYY', 'YYYR', 'YYYR',
 ][playerPosition];
 
 //============

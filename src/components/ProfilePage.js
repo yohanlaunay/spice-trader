@@ -2,6 +2,7 @@ import React from "react";
 import { UserContext } from "../providers/UserProvider";
 import {auth, firestore} from "../firebase";
 import GameEngine from "../game-engine.js";
+import {MaxPlayerCount, MinPlayerCount} from "../game-data.js";
 
 const GameSessionStatus = {
   WAITING_FOR_PLAYERS: 'WAITING_FOR_PLAYERS',
@@ -11,6 +12,7 @@ const GameSessionStatus = {
 const GameSession = (props) => {
   const gameId = props.gameId;
   const gameData = props.gameData;
+  const user = props.user;
 
   // TODO list player size game ready to start when all players are there.
 
@@ -55,12 +57,67 @@ const GameSession = (props) => {
     });
   }
 
+  function joinGame(){
+    // TODO update state "inviting"
+    const gameRef = firestore.collection('games').doc(gameId);
+    firestore.runTransaction(transaction => {
+      return transaction.get(gameRef).then(doc => {
+        if( ! doc.exists ){
+          throw 'Game deleted';
+        }
+        if( doc.data().players.find(p => p.uid === user.uid) ){
+          return doc.data().players;
+        }
+        const newPlayers = [{
+            uid: user.uid,
+            img: user.photoURL,
+            name: user.displayName,
+            email: user.email,
+          }].concat(doc.data().players);
+        transaction.update(gameRef,{players: newPlayers});
+        return newPlayers;
+      });
+    }).then(newPlayers=>{
+      console.log('Join successful', newPlayers); // TODO
+    }).catch(error => {
+      console.log('Error joining session', error); // TODO
+    });
+  }
+
+  let playersUi = [];
+  gameData.players.forEach(player => {
+    playersUi.push(
+      <div className='player' key={player.uid}>
+        <img src={player.img} width='48px' height='48px' /><br />
+        Name: {player.name}<br />
+        Email: {player.email}
+      </div>
+    );
+  });
+
+  let invitedPlayers = [];
+  gameData.owners.forEach(owner =>{
+    if( !gameData.players.find(p=>p.email === owner) ){
+      invitedPlayers.push(
+        <div key={owner}>
+          {owner}
+        </div>
+      );
+    }
+  });
+
+  // TODO cannot join if already joined.
+
   return (
     <div className='game'>
       Game Id: {gameId}<br />
       Status: {GameSessionStatus[gameData.status]}<br />
-      Players: {gameData.owners.join(', ')}<br />
-      <button onClick={invitePlayer}>Invite</button>
+      Confirmed Players: <br />
+      {playersUi}
+      Invited Players: <br />
+      {invitedPlayers}
+      <button onClick={joinGame}>Join</button> |
+      <button onClick={invitePlayer}>Invite</button> |
       <button onClick={deleteGame}>Delete Game</button>
     </div>
   );
@@ -109,6 +166,7 @@ const GameSessionList = (props) => {
     games.push(
       <GameSession
         key={gameId}
+        user={user}
         gameId={gameId}
         gameData={gameData}
       />
