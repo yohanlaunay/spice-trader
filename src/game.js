@@ -942,6 +942,9 @@ class Game extends React.Component {
       setTimeout(() =>  this.dismissError(error), 3000);
     }
 
+    // Always show the current player's play
+    let currentUserPlayer = this.state.session.game.players.find(p=>p.uid === currentUser.uid);
+
     return (
       <div id="game">
         <div id='error' className={error !== null?'active':'inactive'}>
@@ -973,7 +976,7 @@ class Game extends React.Component {
           />
           <PlayerHand
             gameState={this.state}
-            player={GameEngine.getActivePlayer(this.state.session.game)}
+            player={currentUserPlayer}
             onCardClicked={this.onActivePlayerCardClicked}
           />
           <VictoryCards
