@@ -14,79 +14,6 @@ const GameSession = (props) => {
   const gameData = props.gameData;
   const user = props.user;
 
-  function invitePlayer(){
-    let email = prompt("Enter player email","")
-    if( email === null ){
-      return;
-    }
-    email = email.trim().toLowerCase();
-    if( ! email.includes('@') ){
-      return;
-    }
-
-    console.log("Inviting: ",email);
-    // TODO update state "inviting"
-    const gameRef = firestore.collection('games').doc(gameId);
-    firestore.runTransaction(transaction => {
-      return transaction.get(gameRef).then(doc => {
-        if( ! doc.exists ){
-          throw new Error('Game deleted');
-        }
-        if( doc.data().owners.includes(email) ){
-          return doc.data().owners;
-        }
-        const newOwners = [email].concat(doc.data().owners);
-        transaction.update(gameRef,{owners: newOwners});
-        return newOwners;
-      });
-    }).then(newOwners=>{
-      console.log('Invite successful', newOwners); // TODO
-    }).catch(error => {
-      alert('Error adding players', error); // TODO
-    });
-  }
-
-  function deleteGame(){
-    // TODO update state "deleting"
-    firestore.collection('games').doc(gameId).delete()
-    .then(()=>{
-      console.log("Delete successful");
-    }).catch(error => {
-      alert("Error deleting the game",error); // TODO
-    });
-  }
-
-  function joinGame(){
-    // TODO update state "joining"
-    const gameRef = firestore.collection('games').doc(gameId);
-    firestore.runTransaction(transaction => {
-      return transaction.get(gameRef).then(doc => {
-        if( ! doc.exists ){
-          throw new Error('Game deleted');
-        }
-        if( doc.data().players.find(p => p.uid === user.uid) ){
-          return doc.data().players;
-        }
-        const newPlayers = [{
-            uid: user.uid,
-            img: user.photoURL,
-            name: user.displayName,
-            email: user.email,
-          }].concat(doc.data().players);
-        transaction.update(gameRef,{players: newPlayers});
-        return newPlayers;
-      });
-    }).then(newPlayers=>{
-      console.log('Join successful', newPlayers); // TODO
-    }).catch(error => {
-      alert('Error joining session', error); // TODO
-    });
-  }
-
-  function startGame(){
-    // TODO
-  }
-
   function renderGameWaitingForPlayers(){
     let playersUi = gameData.players.forEach(player => {
       return (
@@ -115,21 +42,21 @@ const GameSession = (props) => {
       actions.push(
         <div className='join-game'
           key='action-join'
-          onClick={joinGame}>Join</div>
+          onClick={() => props.joinGame(gameId)}>Join</div>
       );
     }
     // Invite action
     actions.push(
       <div className='invite-player'
         key='action-invite'
-        onClick={invitePlayer}>Invite</div>
+        onClick={()=>props.invitePlayer(gameId)}>Invite</div>
     );
     // Delete game
     if( isConfirmedPlayer ){
       actions.push(
         <div className='delete-game'
           key='action-delete'
-          onClick={deleteGame}>Delete</div>
+          onClick={()=>props.deleteGame(gameId)}>Delete</div>
       );
     }
     // If enough players can start
@@ -137,7 +64,7 @@ const GameSession = (props) => {
       actions.push(
         <div className='start-game'
           key='start-delete'
-          onClick={startGame}>Start</div>
+          onClick={()=>props.startGame(gameId)}>Start</div>
       );
     }
 
@@ -172,30 +99,7 @@ const GameSession = (props) => {
 };
 
 const GameSessionList = (props) => {
-  // const user = props.user;
-  // const {photoURL, displayName, email} = user;
   const gameList = props.value;
-  const user = props.user;
-  const {uid, photoURL, displayName, email} = user;
-
-  function createGame(){
-    console.log("Create Game");
-     firestore.collection('games').add({
-       status: GameSessionStatus.WAITING_FOR_PLAYERS,
-       owners: [email],
-       players: [{
-         uid: uid,
-         img: photoURL,
-         name: displayName,
-         email: email,
-       }],
-       game: null,
-     }).then((docRef) => {
-       console.log("New Game created with id:", docRef.id);
-     }).catch((error) => {
-       console.log("Error creating game:",error);
-     });
-  }
 
   if( gameList.loading ){
     return (
@@ -213,16 +117,20 @@ const GameSessionList = (props) => {
     return (
       <GameSession
         key={gameId}
-        user={user}
+        user={props.user}
         gameId={gameId}
         gameData={gameData}
+        joinGame={props.joinGame}
+        startGame={props.startGame}
+        invitePlayer={props.invitePlayer}
+        deleteGame={props.deleteGame}
       />
     );
   });
 
   return (
     <div className='game-list'>
-      <button onClick={createGame}>Create Game</button>
+      <button onClick={props.createGame}>Create Game</button>
       {games}
     </div>
   );
@@ -235,11 +143,112 @@ class ProfilePage extends React.Component {
   constructor(props){
     super(props);
 
+    this.invitePlayer = this.invitePlayer.bind(this);
+    this.deleteGame = this.deleteGame.bind(this);
+    this.joinGame = this.joinGame.bind(this);
+    this.startGame = this.startGame.bind(this);
+    this.createGame = this.createGame.bind(this);
+
     this.state = {
       gameList: {
         loading: true,
       },
     };
+  }
+
+  invitePlayer(gameId){
+    let email = prompt("Enter player email","")
+    if( email === null ){
+      return;
+    }
+    email = email.trim().toLowerCase();
+    if( ! email.includes('@') ){
+      return;
+    }
+
+    console.log("Inviting: ",email);
+    // TODO update state "inviting"
+    const gameRef = firestore.collection('games').doc(gameId);
+    firestore.runTransaction(transaction => {
+      return transaction.get(gameRef).then(doc => {
+        if( ! doc.exists ){
+          throw new Error('Game deleted');
+        }
+        if( doc.data().owners.includes(email) ){
+          return doc.data().owners;
+        }
+        const newOwners = [email].concat(doc.data().owners);
+        transaction.update(gameRef,{owners: newOwners});
+        return newOwners;
+      });
+    }).then(newOwners=>{
+      console.log('Invite successful', newOwners); // TODO
+    }).catch(error => {
+      alert('Error adding players', error); // TODO
+    });
+  }
+
+  deleteGame(gameId){
+    // TODO update state "deleting"
+    firestore.collection('games').doc(gameId).delete()
+    .then(()=>{
+      console.log("Delete successful");
+    }).catch(error => {
+      alert("Error deleting the game",error); // TODO
+    });
+  }
+
+  joinGame(gameId){
+    // TODO update state "joining"
+    const user = this.context;
+    const gameRef = firestore.collection('games').doc(gameId);
+    firestore.runTransaction(transaction => {
+      return transaction.get(gameRef).then(doc => {
+        if( ! doc.exists ){
+          throw new Error('Game deleted');
+        }
+        if( doc.data().players.find(p => p.uid === user.uid) ){
+          return doc.data().players;
+        }
+        const newPlayers = [{
+            uid: user.uid,
+            img: user.photoURL,
+            name: user.displayName,
+            email: user.email,
+          }].concat(doc.data().players);
+        transaction.update(gameRef,{players: newPlayers});
+        return newPlayers;
+      });
+    }).then(newPlayers=>{
+      console.log('Join successful', newPlayers); // TODO
+    }).catch(error => {
+      alert('Error joining session', error); // TODO
+    });
+  }
+
+  createGame(){
+    console.log("Create Game");
+    const user = this.context;
+     firestore.collection('games').add({
+       status: GameSessionStatus.WAITING_FOR_PLAYERS,
+       owners: [user.email],
+       players: [{
+         uid: user.uid,
+         img: user.photoURL,
+         name: user.displayName,
+         email: user.email,
+       }],
+       game: null,
+     }).then((docRef) => {
+       console.log("New Game created with id:", docRef.id);
+     }).catch((error) => {
+       console.log("Error creating game:",error);
+     });
+  }
+
+  startGame(gameId){
+    const user = this.context;
+    // TODO
   }
 
   componentDidMount() {
@@ -284,6 +293,11 @@ class ProfilePage extends React.Component {
         <GameSessionList
           user={user}
           value={this.state.gameList}
+          joinGame={this.joinGame}
+          startGame={this.startGame}
+          invitePlayer={this.invitePlayer}
+          deleteGame={this.deleteGame}
+          createGame={this.createGame}
         />
       </div>
     )
