@@ -567,7 +567,7 @@ const getPlayerScore = (player) => {
   }
   // Points for resources
   for (let resource of player.resources) {
-    score.resources += ResourceVictoryPoints[resource] || 0;
+    score.resources += ResourceVictoryPoints[resource.type] || 0;
   }
   score.total += score.resources;
 

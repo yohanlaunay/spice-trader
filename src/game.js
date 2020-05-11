@@ -103,8 +103,8 @@ class VictoryCards extends React.Component {
     const board = this.props.board;
     const cardList = [];
     for( const [index, card] of board.victoryCardsLineUp.entries()){
-      const hasGoldCoin = index === 0 && board.coins.gold > 0;
-      const hasSilverCoin = index === 1 && board.coins.silver > 0;
+      const hasGoldCoin = GameEngine.cardRewardsGoldCoin(board, index);
+      const hasSilverCoin = GameEngine.cardRewardsSilverCoin(board, index);
       cardList.push(
           <VictoryCard
             gameState={this.props.gameState}
@@ -282,12 +282,13 @@ function Player(props) {
     classNames.push('not-selected');
   }
   const player = props.value;
+  const score = GameEngine.getPlayerScore(player);
 
   return (
     <div className={classNames.join(' ')}>
       <div className='header'>
         <div className='name'>
-          {player.name}
+          {player.name} ({score.coins}|{score.resources}|{score.cards})
         </div>
         <div className='player-vp'>
           <div className='vp-cards'>
@@ -336,15 +337,7 @@ function Players(props){
 function ActionBar(props){
 
   const activePlayer = GameEngine.getActivePlayer(props.gameState.session.game);
-  const [lastKnownAction, setLastKnownAction] = React.useState(null);
   const currentAction = props.currentAction;
-  const shouldScrollToTop = currentAction !== lastKnownAction;
-  React.useEffect(() => {
-    if( shouldScrollToTop ){
-     window.scrollTo(0, 0)
-     setLastKnownAction(currentAction);
-    }
-  }, [shouldScrollToTop,currentAction,setLastKnownAction]);
 
   if( props.user.uid !== activePlayer.uid){
     return (
@@ -536,7 +529,7 @@ function GameLog(props){
     if( entry.isVpCard ){
       classNames.push('vp');
     }
-    entries[0].push(
+    entries[0].unshift(
       <div className={classNames.join(' ')} key={key}>
         <span className='player-name'>{entry.playerName}</span>
         <span className='action'>{entry.action}</span>
@@ -616,7 +609,6 @@ class Game extends React.Component {
         return newState.session;
       });
     }).then(session => {
-      console.log('Game update successful');
       newState.updating = false;
       newState.session = session;
       this.setState(newState);
