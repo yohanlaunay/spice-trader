@@ -282,8 +282,6 @@ function Player(props) {
     classNames.push('not-selected');
   }
   const player = props.value;
-  const score = GameEngine.getPlayerScore(player);
-
   return (
     <div className={classNames.join(' ')}>
       <div className='header'>
@@ -293,7 +291,7 @@ function Player(props) {
         <div className='player-vp'>
           <div className='vp-cards'>
             <div className='score'>
-              {player.victoryCards.length}
+              {player.victoryCards.length}/{PlayerMaxVictoryCards}
             </div>
           </div>
           <div className='coin gold'>
