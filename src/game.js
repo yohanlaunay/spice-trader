@@ -505,13 +505,7 @@ function EndGameScoring(props) {
 
 function GameLog(props){
   const history = props.history;
-  const entries = [
-    [
-      <div className='turn-entry' key={'turn_start'}>
-        <span className='turn'>Game Start</span>
-      </div>
-    ]
-  ];
+  const entries = [];
   let lastTurn = -1;
   for( const entry of history ){
     const key = entry.turn+'_'+entry.playerId;
