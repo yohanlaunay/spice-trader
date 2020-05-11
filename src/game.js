@@ -288,7 +288,7 @@ function Player(props) {
     <div className={classNames.join(' ')}>
       <div className='header'>
         <div className='name'>
-          {player.name} ({score.coins}|{score.resources}|{score.cards})
+          {player.name}
         </div>
         <div className='player-vp'>
           <div className='vp-cards'>
