@@ -301,7 +301,7 @@ class ProfilePage extends React.Component {
         const gameSession = {
           game: game,
           turn: 0,
-          lastTurnStartingPlayer: null,
+          isLastTurn: false,
           history: [],
           currentAction: null,
           currentActionData: null,

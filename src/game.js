@@ -420,7 +420,7 @@ function ActionBar(props){
   }
 
   const lastTurnClassNames = ['last-turn-message'];
-  if( props.gameState.session.lastTurnStartingPlayer !== null ){
+  if( !!props.gameState.session.isLastTurn ){
     lastTurnClassNames.push('active');
   }else{
     lastTurnClassNames.push('inactive');
@@ -866,9 +866,8 @@ class Game extends React.Component {
     const game = newState.session.game;
     // check if the game is on it's last turn
     // (if the active player has reached number of cards)
-    if( newState.session.lastTurnStartingPlayer === null
-        && activePlayer.victoryCards.length >= PlayerMaxVictoryCards){
-      newState.session.lastTurnStartingPlayer = game.activePlayerIndex;
+    if( activePlayer.victoryCards.length >= PlayerMaxVictoryCards){
+      newState.session.isLastTurn = true;
     }
     game.activePlayerIndex = (game.activePlayerIndex + 1) % game.players.length;
     // increase turn count when it's first player's turn again
@@ -938,7 +937,7 @@ class Game extends React.Component {
       return navigate('/');
     }
 
-    if(this.state.session.lastTurnStartingPlayer === this.state.session.game.activePlayerIndex ){
+    if(!!this.state.session.isLastTurn && this.state.session.game.activePlayerIndex === 0){
       return (
         <EndGameScoring players={this.state.session.game.players} />
       );
