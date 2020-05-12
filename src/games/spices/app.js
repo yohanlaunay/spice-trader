@@ -375,12 +375,17 @@ function ActionBar(props){
     );
   }
   function renderSelectResourceUpgradeState(){
+    const currentActionData = props.gameState.session.currentActionData;
+    const hasStartedUpgraded = currentActionData.numUpgradesRemaining === currentActionData.totalUpgradesPossible;
     return (
       <div className="action-content">
           <div className='message'>
-            You can do up to <b>{props.gameState.session.currentActionData.numUpgradesRemaining} resource</b> upgrades
+            You can do up to <b>{currentActionData.numUpgradesRemaining} resource</b> upgrades
           </div>
-          <div className='action-button' onClick={props.onPlayerPass}>Pass</div>
+          {hasStartedUpgraded?
+            <div className='action-button' onClick={props.onCancelPlayerAction}>Cancel</div>
+            :<div className='action-button' onClick={props.onPlayerPass}>Pass</div>
+          }
       </div>
     );
   }
@@ -391,7 +396,8 @@ function ActionBar(props){
           numResourcesSelected++;
         }
     }
-    const numResourcesToSelect = Math.abs(props.gameState.session.currentActionData.numResourcesForPayment - numResourcesSelected);
+    const currentActionData = props.gameState.session.currentActionData;
+    const numResourcesToSelect = Math.abs(currentActionData.numResourcesForPayment - numResourcesSelected);
     return (
       <div className="action-content">
           <div className='message'>
@@ -752,6 +758,7 @@ class SpiceTraderApp extends React.Component {
         newState.session.currentActionData = {
           cardId: cardId,
           numUpgradesRemaining: selectedCard.upgradeCount,
+          totalUpgradesPossible: selectedCard.upgradeCount,
         };
         newState.session.selectedUids[cardId] = true;
         newState.session.currentAction = GameActions.SelectResourceUpgrade;
