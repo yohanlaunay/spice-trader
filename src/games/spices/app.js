@@ -718,6 +718,11 @@ class SpiceTraderApp extends React.Component {
     }
     const newState = this.copyState();
     if( newState.session.currentAction !== null ){
+      // If user selected an upgrade card and hasn't upgraded they can change their mind
+      if( newState.session.currentAction === GameActions.SelectResourceUpgrade
+      &&  newState.session.currentActionData.numUpgradesRemaining === newState.session.currentActionData.totalUpgradesPossible ){
+        this.onCancelPlayerAction();
+      }
       return;
     }
     let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
