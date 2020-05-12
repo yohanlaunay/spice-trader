@@ -607,3 +607,15 @@ const GameEngine = {
 };
 
 export default GameEngine;
+
+export const createGameSession = (players) => {
+  return {
+    game: GameEngine.createGame(players),
+    turn: 0,
+    isLastTurn: false,
+    history: [],
+    currentAction: null,
+    currentActionData: null,
+    selectedUids: {},
+  };
+}

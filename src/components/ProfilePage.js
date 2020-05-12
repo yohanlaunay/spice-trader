@@ -2,7 +2,7 @@ import React from "react";
 import {navigate} from "@reach/router";
 import { UserContext } from "../providers/UserProvider";
 import {auth, firestore} from "../firebase";
-import GameEngine from "../game-engine.js";
+import GameEngine, {createGameSession} from "../game-engine.js";
 import {MaxPlayerCount, MinPlayerCount} from "../game-data.js";
 
 const GameSession = (props) => {
@@ -297,21 +297,12 @@ class ProfilePage extends React.Component {
         if( user.uid !== doc.data().admin ){
           throw new Error('Admin only');
         }
-        const game = GameEngine.createGame(doc.data().players);
-        const gameSession = {
-          game: game,
-          turn: 0,
-          isLastTurn: false,
-          history: [],
-          currentAction: null,
-          currentActionData: null,
-          selectedUids: {},
-        }
+        const gameSession = createGameSession(doc.data().players);
         transaction.update(gameRef,{session: gameSession});
-        return game;
+        return true;
       });
-    }).then(game => {
-      console.log('Game started', game); // TODO
+    }).then(ignore => {
+      console.log('Game started'); // TODO
     }).catch(error => {
       alert('Error creating game:'+error); // TODO
     });
