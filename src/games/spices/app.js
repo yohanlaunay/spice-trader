@@ -745,14 +745,34 @@ class SpiceTraderApp extends React.Component {
         this.endTurn(newState);
         break;
       case CardType.Trading:
-        let selection = prompt("How many trades", "1");
-        if( selection === null ){
+        // check how many trades can the player do
+        let maxTrades = 0;
+        for( let tradeCounter = 1; tradeCounter <= PlayerMaxResources; tradeCounter++ ){
+          if( SpiceTraderEngine.playerPlayTradingCard(activePlayer, cardId, tradeCounter) === false ){
+            maxTrades = tradeCounter -1;
+            break;
+          }
+        }
+        if( maxTrades <= 0 ){
+          this.showError('Not enough resources for this trade.');
           return;
         }
-        let numTrades = parseInt(selection);
-        if( numTrades <= 0 ){
-          return;
+        let numTrades;
+        if( maxTrades === 1 ){
+          // Auto-trade
+          numTrades = 1;
+        }else{
+          // Ask how many they want to do
+          let selection = prompt("How many trades (max="+maxTrades+")", "1");
+          if( selection === null ){
+            return;
+          }
+          numTrades = parseInt(selection);
+          if( numTrades <= 0 ){
+            return;
+          }
         }
+
         activePlayer = SpiceTraderEngine.playerPlayTradingCard(activePlayer, cardId, numTrades);
         if (activePlayer === false) {
           this.showError('Invalid trade, check your resources and try again.');
