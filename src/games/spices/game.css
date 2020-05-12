@@ -71,6 +71,7 @@
 
 .card:hover {
   transform: scale(1.15, 1.15);
+  z-index:10;
 }
 
 .card.selected {
@@ -465,8 +466,8 @@
 .end-game .player-score .score .score-from-resources {}
 
 .end-game .player-score.winner {
-  box-shadow: 0 4px 8px 0 rgba(255,215,0,0.85);
-  background-color: rgba(255,215,0,0.85);
+  box-shadow: 0 4px 8px 0 rgba(255, 215, 0, 0.85);
+  background-color: rgba(255, 215, 0, 0.85);
   transform: scale(1.15, 1.15);
 }
 

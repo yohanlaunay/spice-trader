@@ -3,6 +3,7 @@ import {navigate} from "@reach/router";
 import {firestore} from "../../firebase";
 import { UserContext } from "../../providers/UserProvider";
 import SpiceTraderEngine from './engine.js';
+import './game.css';
 import {
   PlayerMaxResources,
   PlayerMaxVictoryCards,
@@ -282,6 +283,7 @@ function Player(props) {
     classNames.push('not-selected');
   }
   const player = props.value;
+  const maxVpCards = PlayerMaxVictoryCards(props.gameState.session.game.players.length);
   return (
     <div className={classNames.join(' ')}>
       <div className='header'>
@@ -291,7 +293,7 @@ function Player(props) {
         <div className='player-vp'>
           <div className='vp-cards'>
             <div className='score'>
-              {player.victoryCards.length}/{PlayerMaxVictoryCards}
+              {player.victoryCards.length}/{maxVpCards}
             </div>
           </div>
           <div className='coin gold'>
@@ -567,10 +569,6 @@ class SpiceTraderApp extends React.Component {
     return this.loading === true
         || this.updating === true
         || user.uid !== activePlayer.uid;
-  }
-
-  componentWillMount(){
-    require('./game.css');
   }
 
   componentDidMount() {
@@ -858,7 +856,7 @@ class SpiceTraderApp extends React.Component {
     const game = newState.session.game;
     // check if the game is on it's last turn
     // (if the active player has reached number of cards)
-    if( activePlayer.victoryCards.length >= PlayerMaxVictoryCards){
+    if( activePlayer.victoryCards.length >= PlayerMaxVictoryCards(game.players.length)){
       newState.session.isLastTurn = true;
     }
     game.activePlayerIndex = (game.activePlayerIndex + 1) % game.players.length;
