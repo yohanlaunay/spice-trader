@@ -2,7 +2,7 @@ import React, {useContext} from "react";
 import { Router } from "@reach/router";
 import SignIn from "./SignIn";
 import ProfilePage from "./ProfilePage";
-import Game from "../game.js";
+import {GamesRouter} from "../games/games.js";
 import { UserContext } from "../providers/UserProvider";
 
 const Application = () => {
@@ -19,7 +19,7 @@ const Application = () => {
   return (
     <Router>
       <ProfilePage path="/" />
-      <Game path="game/:gameId" />
+      <GamesRouter path="game/:gameType/:gameId" />
     </Router>
   );
 }

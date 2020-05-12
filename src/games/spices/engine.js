@@ -9,7 +9,9 @@ import {
   VictoryCardsLineUpSize,
   StartingVictoryCoins,
   PlayerStartingResources,
-} from './game-data.js';
+  MaxPlayerCount,
+  MinPlayerCount,
+} from './data.js';
 
 //=====================
 // Utils
@@ -583,13 +585,26 @@ const getPlayerScore = (player) => {
   score.total += score.coins;
 
   return score;
-
 }
 
-const GameEngine = {
+const createGameSession = (players) => {
+  return {
+    game: createGame(players),
+    turn: 0,
+    isLastTurn: false,
+    history: [],
+    currentAction: null,
+    currentActionData: null,
+    selectedUids: {},
+  };
+}
+
+const SpiceTraderEngine = {
+  maxPlayerCount: MaxPlayerCount,
+  minPlayerCount: MinPlayerCount,
   copy: copy,
   guid: guid,
-  createGame: createGame,
+  createGameSession: createGameSession,
   getPlayerScore: getPlayerScore,
   getActivePlayer: getActivePlayer,
   playerRests: playerRests,
@@ -606,16 +621,4 @@ const GameEngine = {
   cardRewardsSilverCoin: cardRewardsSilverCoin,
 };
 
-export default GameEngine;
-
-export const createGameSession = (players) => {
-  return {
-    game: GameEngine.createGame(players),
-    turn: 0,
-    isLastTurn: false,
-    history: [],
-    currentAction: null,
-    currentActionData: null,
-    selectedUids: {},
-  };
-}
+export default SpiceTraderEngine;

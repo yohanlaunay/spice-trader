@@ -2,13 +2,15 @@ import React from "react";
 import {navigate} from "@reach/router";
 import { UserContext } from "../providers/UserProvider";
 import {auth, firestore} from "../firebase";
-import GameEngine, {createGameSession} from "../game-engine.js";
-import {MaxPlayerCount, MinPlayerCount} from "../game-data.js";
+import Games from "../games/games.js";
+
+const DEFAULT_GAME_TYPE = 'spicetrader'; // TODO(ylaunay)
 
 const GameSession = (props) => {
   const gameId = props.gameId;
   const gameData = props.gameData;
   const user = props.user;
+  const gameInfo = Games[gameData.gameType] || DEFAULT_GAME_TYPE;
 
   function renderGameWaitingForPlayers(){
     const playersUi = gameData.players.map(player => {
@@ -36,7 +38,7 @@ const GameSession = (props) => {
     const isGameAdmin = gameData.admin === user.uid;
     const isConfirmedPlayer = gameData.players.find(p => p.uid === user.uid);
     // Join action
-    if( !isConfirmedPlayer && gameData.players.length < MaxPlayerCount ){
+    if( !isConfirmedPlayer && gameData.players.length < gameInfo.maxPlayerCount ){
       actions.push(
         <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full"
           key='action-join'
@@ -58,7 +60,7 @@ const GameSession = (props) => {
           onClick={()=>props.deleteGame(gameId)}>Delete</button>
       );
       // If enough players can start
-      if( gameData.players.length >= MinPlayerCount && gameData.players.length <= MaxPlayerCount ){
+      if( gameData.players.length >= gameInfo.minPlayerCount && gameData.players.length <= gameInfo.maxPlayerCount ){
         actions.push(
           <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
             key='action-start'
@@ -69,12 +71,24 @@ const GameSession = (props) => {
 
     return (
       <div className='game'>
-        Game Id: {gameId}<br />
-        Confirmed Players: <br />
-        {playersUi}
-        Invited Players: <br />
-        {invitedPlayers}
-        {actions}
+        <div className='game-info'>
+          <h2>Game Information</h2>
+          Game Id: {gameId}<br />
+          Game Name: {gameInfo.name}<br />
+          Players Count: {gameInfo.minPlayerCount} - {gameInfo.maxPlayerCount}<br />
+          Duration: {gameInfo.duration}
+        </div>
+        <div className='game-players'>
+          <h3>Confirmed Players:</h3>
+          {playersUi}
+        </div>
+        <div className='game-guests'>
+          <h3>Invited Players:</h3>
+          {invitedPlayers}
+        </div>
+        <div className='game-actions'>
+          {actions}
+        </div>
       </div>
     );
   }
@@ -98,7 +112,7 @@ const GameSession = (props) => {
       actions.push(
         <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
           key='action-play'
-          onClick={() => props.playGame(gameId)}>Play</button>
+          onClick={() => props.playGame(gameId, gameData.gameType)}>Play</button>
       );
       // [Admin only]
       if( isGameAdmin ){
@@ -112,10 +126,20 @@ const GameSession = (props) => {
     }
     return (
       <div className='game'>
-        Game Id: {gameId}<br />
-        Players: <br />
-        {playersUi}
-        {actions}
+        <div className='game-info'>
+          <h2>Game Information</h2>
+          Game Id: {gameId}<br />
+          Game Name: {gameInfo.name}<br />
+          Players Count: {gameInfo.minPlayerCount} - {gameInfo.maxPlayerCount}<br />
+          Duration: {gameInfo.duration}
+        </div>
+        <div className='game-players'>
+          <h3>Players:</h3>
+          {playersUi}
+        </div>
+        <div className='game-actions'>
+          {actions}
+        </div>
       </div>
     );
   }
@@ -155,9 +179,11 @@ const GameSessionList = (props) => {
     );
   });
 
+  const selectedGameType = DEFAULT_GAME_TYPE; // TODO
+
   return (
     <div className='game-list'>
-      <button className="w-full py-3 bg-blue-600 mt-4 text-white"  onClick={props.createGame}>Create Game</button>
+      <button className="w-full py-3 bg-blue-600 mt-4 text-white"  onClick={() => props.createGame(selectedGameType)}>Create Game</button>
       {games}
     </div>
   );
@@ -182,10 +208,6 @@ class ProfilePage extends React.Component {
         loading: true,
       },
     };
-  }
-
-  componentWillMount(){
-    require('../profile.css');
   }
 
   invitePlayer(gameId){
@@ -266,12 +288,14 @@ class ProfilePage extends React.Component {
     });
   }
 
-  createGame(){
-    console.log("Create Game");
+  createGame(gameType){
+    gameType = gameType || DEFAULT_GAME_TYPE; // TODO
+    console.log("Create Game "+gameType);
     const user = this.context;
      firestore.collection('games').add({
        guests: [user.email],
        admin: user.uid,
+       gameType: gameType,
        players: [{
          uid: user.uid,
          img: user.photoURL,
@@ -297,19 +321,20 @@ class ProfilePage extends React.Component {
         if( user.uid !== doc.data().admin ){
           throw new Error('Admin only');
         }
-        const gameSession = createGameSession(doc.data().players);
+        const gameType = doc.data().gameType;
+        const gameSession = Games[gameType].createGameSession(doc.data().players);
         transaction.update(gameRef,{session: gameSession});
         return true;
       });
     }).then(ignore => {
-      console.log('Game started'); // TODO
+      console.log('Game started'); // TODO state change
     }).catch(error => {
       alert('Error creating game:'+error); // TODO
     });
   }
 
-  playGame(gameId){
-    return navigate(`/game/${gameId}`);
+  playGame(gameId, gameType){
+    return navigate(`/game/${gameType}/${gameId}`);
   }
 
   componentDidMount() {

@@ -1,14 +1,14 @@
 import React from 'react';
 import {navigate} from "@reach/router";
-import {firestore} from "./firebase";
-import { UserContext } from "./providers/UserProvider";
-import GameEngine from './game-engine.js';
+import {firestore} from "../../firebase";
+import { UserContext } from "../../providers/UserProvider";
+import SpiceTraderEngine from './engine.js';
 import {
   PlayerMaxResources,
   PlayerMaxVictoryCards,
   CardType,
   ResourceOrder,
-} from './game-data.js';
+} from './data.js';
 
 const GameActions = {
   DiscardResources: 'DiscardResources',
@@ -103,8 +103,8 @@ class VictoryCards extends React.Component {
     const board = this.props.board;
     const cardList = [];
     for( const [index, card] of board.victoryCardsLineUp.entries()){
-      const hasGoldCoin = GameEngine.cardRewardsGoldCoin(board, index);
-      const hasSilverCoin = GameEngine.cardRewardsSilverCoin(board, index);
+      const hasGoldCoin = SpiceTraderEngine.cardRewardsGoldCoin(board, index);
+      const hasSilverCoin = SpiceTraderEngine.cardRewardsSilverCoin(board, index);
       cardList.push(
           <VictoryCard
             gameState={this.props.gameState}
@@ -334,7 +334,7 @@ function Players(props){
 
 function ActionBar(props){
 
-  const activePlayer = GameEngine.getActivePlayer(props.gameState.session.game);
+  const activePlayer = SpiceTraderEngine.getActivePlayer(props.gameState.session.game);
   const currentAction = props.currentAction;
 
   if( props.user.uid !== activePlayer.uid){
@@ -350,7 +350,7 @@ function ActionBar(props){
   }
 
   function renderInitState(){
-    const canRest = GameEngine.getActivePlayer(props.gameState.session.game).discardPile.length > 0;
+    const canRest = SpiceTraderEngine.getActivePlayer(props.gameState.session.game).discardPile.length > 0;
     return (
       <div className="action-content">
         <div className='message'>
@@ -466,7 +466,7 @@ function EndGameScoring(props) {
   let scores = [];
   let winner = null;
   for( const player of players ){
-    const playerScore =  GameEngine.getPlayerScore(player);
+    const playerScore =  SpiceTraderEngine.getPlayerScore(player);
     // tie-breaker is winner is last to play
     if( winner === null || playerScore.total >= winner.score ){
       winner = {
@@ -538,7 +538,7 @@ function GameLog(props){
   );
 }
 
-class Game extends React.Component {
+class SpiceTraderApp extends React.Component {
 
   static contextType = UserContext;
 
@@ -563,7 +563,7 @@ class Game extends React.Component {
 
   isGameReadOnly(){
     const user = this.context;
-    const activePlayer = GameEngine.getActivePlayer(this.state.session.game);
+    const activePlayer = SpiceTraderEngine.getActivePlayer(this.state.session.game);
     return this.loading === true
         || this.updating === true
         || user.uid !== activePlayer.uid;
@@ -612,7 +612,7 @@ class Game extends React.Component {
   }
 
   copyState(state){
-    const newState = GameEngine.copy(state||this.state);
+    const newState = SpiceTraderEngine.copy(state||this.state);
     newState.error = null;
     return newState;
   }
@@ -632,7 +632,7 @@ class Game extends React.Component {
   showError(errorMessage){
     const newState = this.copyState();
     newState.error = {
-      uid: GameEngine.guid(),
+      uid: SpiceTraderEngine.guid(),
       message: errorMessage,
     };
     this.updateState(newState, /*sessionNotUpdated=*/true);
@@ -658,8 +658,8 @@ class Game extends React.Component {
     }
     console.log("Victory Card Clicked", cardId);
     // claim the card if possible
-    let activePlayer = GameEngine.getActivePlayer(newState.session.game);
-    let result = GameEngine.playerBuyVictoryCard(activePlayer, newState.session.game.board, cardId);
+    let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
+    let result = SpiceTraderEngine.playerBuyVictoryCard(activePlayer, newState.session.game.board, cardId);
     if( result === false ){
       this.showError('Not enough resources to claim this card');
       return;
@@ -679,7 +679,7 @@ class Game extends React.Component {
       return;
     }
     console.log("Resource Card Clicked", cardId);
-    let activePlayer = GameEngine.getActivePlayer(newState.session.game);
+    let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
     // check if it's the first card, first is free, have to pay for others.
     let selectedCardIndex = newState.session.game.board.resourceCardsLineUp.findIndex(c => c.card.uid === cardId);
     if( selectedCardIndex === -1 ){
@@ -687,7 +687,7 @@ class Game extends React.Component {
       return;
     } else if( selectedCardIndex === 0 ){
       // all good can claim for free
-      let result = GameEngine.playerBuyResourceCard(activePlayer, newState.session.game.board, cardId, []);
+      let result = SpiceTraderEngine.playerBuyResourceCard(activePlayer, newState.session.game.board, cardId, []);
       if( result === false ){
         this.showError('Not enough resources to pay for this card');
         return;
@@ -716,14 +716,14 @@ class Game extends React.Component {
     if( newState.session.currentAction !== null ){
       return;
     }
-    let activePlayer = GameEngine.getActivePlayer(newState.session.game);
-    let selectedCard = GameEngine.playerFindCard(activePlayer, cardId);
+    let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
+    let selectedCard = SpiceTraderEngine.playerFindCard(activePlayer, cardId);
     if (selectedCard === false) {
       return;
     }
     switch (selectedCard.type) {
       case CardType.Production:
-        activePlayer = GameEngine.playerPlayProductionCard(activePlayer, cardId);
+        activePlayer = SpiceTraderEngine.playerPlayProductionCard(activePlayer, cardId);
         if (activePlayer === false) {
           this.showError('Cannot play this card now, pick another one.');
           return;
@@ -741,7 +741,7 @@ class Game extends React.Component {
         if( numTrades <= 0 ){
           return;
         }
-        activePlayer = GameEngine.playerPlayTradingCard(activePlayer, cardId, numTrades);
+        activePlayer = SpiceTraderEngine.playerPlayTradingCard(activePlayer, cardId, numTrades);
         if (activePlayer === false) {
           this.showError('Invalid trade, check your resources and try again.');
           return;
@@ -770,14 +770,14 @@ class Game extends React.Component {
     }
     const newState = this.copyState();
     // check that the resource belongs to the player
-    let activePlayer = GameEngine.getActivePlayer(newState.session.game);
+    let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
     if( activePlayer.resources.findIndex(r=>r.uid===resourceId) === -1){
       this.showError('You can only select your own resources');
       return;
     }
 
     if( newState.session.currentAction === GameActions.DiscardResources ){
-      activePlayer = GameEngine.playerDiscardResource(activePlayer, resourceId);
+      activePlayer = SpiceTraderEngine.playerDiscardResource(activePlayer, resourceId);
       if( activePlayer === false ){
         this.showError('You can only select your own resources');
         return;
@@ -791,8 +791,8 @@ class Game extends React.Component {
       return;
     }
     if( newState.session.currentAction === GameActions.SelectResourceUpgrade ){
-      let activePlayer = GameEngine.getActivePlayer(newState.session.game);
-      activePlayer = GameEngine.playerUpgradeResource(activePlayer, resourceId);
+      let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
+      activePlayer = SpiceTraderEngine.playerUpgradeResource(activePlayer, resourceId);
       if( activePlayer === false ){
         this.showError('This resource cannot be upgraded further');
         return;
@@ -813,7 +813,7 @@ class Game extends React.Component {
         newState.session.selectedUids[resourceId] = true;
       }
       // check if there are enough resources selected to pay.
-      let activePlayer = GameEngine.getActivePlayer(newState.session.game);
+      let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
       let payment = [];
       for( let res of activePlayer.resources ){
         if( newState.session.selectedUids[res.uid] === true ){
@@ -825,7 +825,7 @@ class Game extends React.Component {
         return;
       }
       // Execute the action
-      let result = GameEngine.playerBuyResourceCard(activePlayer, newState.session.game.board, newState.session.currentActionData.cardId, payment);
+      let result = SpiceTraderEngine.playerBuyResourceCard(activePlayer, newState.session.game.board, newState.session.currentActionData.cardId, payment);
       if( result === false ){
         this.showError('Not enough resources for paying for this card');
         return;
@@ -843,7 +843,7 @@ class Game extends React.Component {
       return; // prevent actions during updates
     }
     const newState = this.copyState(state);
-    const activePlayer = GameEngine.getActivePlayer(newState.session.game);
+    const activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
     // check if the active player has too many resources and should discard
     if( activePlayer.resources.length > PlayerMaxResources){
       newState.session.currentAction = GameActions.DiscardResources;
@@ -885,9 +885,9 @@ class Game extends React.Component {
     }
     if( state.session.currentAction === GameActions.SelectResourceUpgrade ){
       const newState = this.copyState(state);
-      let activePlayer = GameEngine.getActivePlayer(newState.session.game);
+      let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
       console.log("No more upgrades, discard the card");
-      activePlayer = GameEngine.playerDiscardCard(activePlayer, newState.session.currentActionData.cardId);
+      activePlayer = SpiceTraderEngine.playerDiscardCard(activePlayer, newState.session.currentActionData.cardId);
       if (activePlayer === false) {
         this.showError('Error discarding this card');
         return;
@@ -904,8 +904,8 @@ class Game extends React.Component {
       return; // prevent actions during updates
     }
     const newState = this.copyState();
-    let activePlayer = GameEngine.getActivePlayer(newState.session.game);
-    activePlayer = GameEngine.playerRests(activePlayer);
+    let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
+    activePlayer = SpiceTraderEngine.playerRests(activePlayer);
     newState.session.game.players[newState.session.game.activePlayerIndex] = activePlayer;
     newState.session.history.push(this.createLog(newState, activePlayer, 'rested'));
     this.endTurn(newState); // nothing async, end the action
@@ -992,4 +992,4 @@ class Game extends React.Component {
   }
 }
 
-export default Game;
+export default SpiceTraderApp;
