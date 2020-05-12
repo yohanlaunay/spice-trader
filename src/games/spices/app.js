@@ -680,9 +680,12 @@ class SpiceTraderApp extends React.Component {
     // Set default action when clicked to playing a resource card
     const newState = this.copyState();
     if( newState.session.currentAction !== null ){
+      // Allow cancel purchase
+      if( newState.session.currentAction === GameActions.PayResourceCard ){
+        this.onCancelPlayerAction();
+      }
       return;
     }
-    console.log("Resource Card Clicked", cardId);
     let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
     // check if it's the first card, first is free, have to pay for others.
     let selectedCardIndex = newState.session.game.board.resourceCardsLineUp.findIndex(c => c.card.uid === cardId);
