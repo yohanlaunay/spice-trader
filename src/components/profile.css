@@ -12,9 +12,6 @@
   padding: 4px;
 }
 
-#profile-page .game .game-info {
-}
-
 #profile-page .game .game-info .game-name {
   display: flex;
   flex-direction: row;
@@ -64,11 +61,10 @@
   flex-direction: row;
 }
 
-#profile-page .game .game-actions > button {
+#profile-page .game .game-actions>button {
   margin-left: 5px;
   margin-right: 5px;
 }
-
 
 #profile-page .confirmed-player {
   display: flex;

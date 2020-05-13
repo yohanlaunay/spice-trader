@@ -1066,6 +1066,9 @@ class SpiceTraderApp extends React.Component {
             {error !== null ? error.message:''}
         </div>
         <div id='panel'>
+          <a href='/' className='home' title='Back to profile page'>
+            <img src={currentUser.photoURL} width="100%" height="100%" alt="Profile" />
+          </a>
           <div id='game-info'>
             <a className='rules'
               href='https://www.fgbradleys.com/rules/rules5/Century-Spice_Road_EN_Rules.pdf'

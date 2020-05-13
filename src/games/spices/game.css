@@ -1,10 +1,10 @@
-.body {
+#game .body {
   font: 14px "Century Gothic", Futura, sans-serif;
   margin: 0px;
   padding: 0px;
 }
 
-.resource {
+#game .resource {
   width: 21px;
   height: 21px;
   margin: 1px;
@@ -13,53 +13,53 @@
   background-position: center;
 }
 
-.resource.selected {
+#game .resource.selected {
   border-spacing: 50px;
   border-radius: 10px;
   background-color: rgba(128, 128, 128, 0.85);
   background-size: 80%;
 }
 
-.resource-Y {
+#game .resource-Y {
   background-image: url('img/cube-yellow.png');
 }
 
-.resource-R {
+#game .resource-R {
   background-image: url('img/cube-red.png');
 }
 
-.resource-G {
+#game .resource-G {
   background-image: url('img/cube-green.png');
 }
 
-.resource-B {
+#game .resource-B {
   background-image: url('img/cube-brown.png');
 }
 
-.resource-any {
+#game .resource-any {
   background-image: url('img/cube-any.png');
 }
 
-.coin {
+#game .coin {
   background-repeat: no-repeat;
   background-size: contain;
 }
 
-.coin.silver {
+#game .coin.silver {
   background-image: url('img/coin-silver.png');
 }
 
-.coin.gold {
+#game .coin.gold {
   background-image: url('img/coin-gold.png');
 }
 
-.resource-list {
+#game .resource-list {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
 }
 
-.card {
+#game .card {
   position: relative;
   min-width: 168px;
   min-height: 288px;
@@ -69,20 +69,20 @@
   background-size: contain;
 }
 
-.card.inactive {
+#game .card.inactive {
   opacity: 0.5;
 }
 
-.card:hover {
-  z-index:20;
+#game .card:hover {
+  z-index: 20;
   transform: scale(1.15, 1.15);
 }
 
-.card.inactive {
+#game .card.inactive {
   transform: scale(1, 1);
 }
 
-.card.selected {
+#game .card.selected {
   transform: scale(1.15, 1.15);
   -webkit-filter: grayscale(100%);
   -moz-filter: grayscale(100%);
@@ -92,23 +92,23 @@
   z-index: 1;
 }
 
-.card-type-production {
+#game .card-type-production {
   background-image: url('img/resource-card-production.png');
 }
 
-.card-type-trading {
+#game .card-type-trading {
   background-image: url('img/resource-card-trading.png');
 }
 
-.card-type-upgrade {
+#game .card-type-upgrade {
   background-image: url('img/resource-card-upgrade.png');
 }
 
-.card-type-victory {
+#game .card-type-victory {
   background-image: url('img/resource-card-victory.png');
 }
 
-.card-type-production .production-container {
+#game .card-type-production .production-container {
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -117,7 +117,7 @@
   width: 27px;
 }
 
-.card-type-production .production-arrow-tip {
+#game .card-type-production .production-arrow-tip {
   background-image: url('img/production-arrow-tip.png');
   background-repeat: no-repeat;
   background-size: contain;
@@ -125,7 +125,7 @@
   height: 20px;
 }
 
-.card-type-production .production-arrow {
+#game .card-type-production .production-arrow {
   display: flex;
   flex-direction: column;
   width: 28px;
@@ -135,12 +135,12 @@
   background-size: 100%;
 }
 
-.card-type-production .resource-recipe {
+#game .card-type-production .resource-recipe {
   margin-left: 2px;
   margin-top: 1px;
 }
 
-.card-type-upgrade .upgrade-container {
+#game .card-type-upgrade .upgrade-container {
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -149,7 +149,7 @@
   width: 28px;
 }
 
-.card-type-upgrade .upgrade-arrow-top {
+#game .card-type-upgrade .upgrade-arrow-top {
   background-image: url('img/upgrade-arrow-top.png');
   background-repeat: no-repeat;
   background-size: contain;
@@ -157,7 +157,7 @@
   height: 25px;
 }
 
-.card-type-upgrade .upgrade-arrow-tip {
+#game .card-type-upgrade .upgrade-arrow-tip {
   background-image: url('img/upgrade-arrow-tip.png');
   background-repeat: no-repeat;
   background-size: contain;
@@ -165,7 +165,7 @@
   height: 20px;
 }
 
-.card-type-upgrade .upgrade-arrow {
+#game .card-type-upgrade .upgrade-arrow {
   display: flex;
   flex-direction: column;
   width: 28px;
@@ -175,12 +175,12 @@
   background-size: 100%;
 }
 
-.card-type-upgrade .upgrade-cubes {
+#game .card-type-upgrade .upgrade-cubes {
   margin-left: 2px;
   margin-top: 1px;
 }
 
-.card-type-trading .trading-container {
+#game .card-type-trading .trading-container {
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -189,7 +189,7 @@
   width: 27px;
 }
 
-.card-type-trading .trading-inside-arrow {
+#game .card-type-trading .trading-inside-arrow {
   background-image: url('img/trading-inside-arrow.png');
   background-repeat: no-repeat;
   background-size: contain;
@@ -199,7 +199,7 @@
   margin-bottom: 5px;
 }
 
-.card-type-trading .trading-arrow-tip {
+#game .card-type-trading .trading-arrow-tip {
   background-image: url('img/trading-arrow-tip.png');
   background-repeat: no-repeat;
   background-size: contain;
@@ -207,7 +207,7 @@
   height: 20px;
 }
 
-.card-type-trading .trading-arrow {
+#game .card-type-trading .trading-arrow {
   display: flex;
   flex-direction: column;
   width: 28px;
@@ -217,12 +217,12 @@
   background-size: 100%;
 }
 
-.card-type-trading .resource-recipe {
+#game .card-type-trading .resource-recipe {
   margin-left: 2px;
   margin-top: 1px;
 }
 
-.card .coin {
+#game .card .coin {
   position: absolute;
   right: 10px;
   top: 10px;
@@ -231,12 +231,12 @@
   height: 48px;
 }
 
-.victory-board .card-list {
+#game .victory-board .card-list {
   display: flex;
   flex-direction: row;
 }
 
-.victory-board .card .points {
+#game .victory-board .card .points {
   position: absolute;
   bottom: 40px;
   color: white;
@@ -246,7 +246,7 @@
   font-size: 38pt;
 }
 
-.victory-board .card .resource-recipe {
+#game .victory-board .card .resource-recipe {
   position: absolute;
   bottom: 13px;
   display: flex;
@@ -255,16 +255,16 @@
   justify-content: center;
 }
 
-.resources-board .card-list {
+#game .resources-board .card-list {
   display: flex;
   flex-direction: row;
 }
 
-.resources-board .card-slot {
+#game .resources-board .card-slot {
   position: relative;
 }
 
-.resources-board .bonus-resources .resource-recipe {
+#game .resources-board .bonus-resources .resource-recipe {
   display: flex;
   flex-direction: column;
   z-index: 1;
@@ -273,17 +273,17 @@
   right: 40px;
 }
 
-.resources-board .bonus-resources .resource {
+#game .resources-board .bonus-resources .resource {
   width: 32px;
   height: 32px;
 }
 
-.player-list {
+#game .player-list {
   display: flex;
   flex-direction: column;
 }
 
-.player {
+#game .player {
   /* Add shadows to create the "card" effect */
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
   border-radius: 5px;
@@ -294,28 +294,28 @@
   padding: 4px;
 }
 
-.player.selected {}
+#game .player.selected {}
 
-.player.not-selected {
+#game .player.not-selected {
   background-color: rgba(128, 128, 128, 0.2);
 }
 
-.player .resource {
+#game .player .resource {
   width: 32px;
   height: 32px;
 }
 
-.player.selected .resource:hover {
+#game .player.selected .resource:hover {
   transform: scale(1.15, 1.15);
 }
 
-.player .header {
+#game .player .header {
   display: flex;
   flex-direction: row;
   margin-bottom: 20px;
 }
 
-.player .name {
+#game .player .name {
   flex: 50%;
   vertical-align: center;
   margin-left: 10px;
@@ -325,14 +325,14 @@
   font-weight: bold;
 }
 
-.player-vp {
+#game .player-vp {
   display: flex;
   flex-direction: row;
   margin: 5px;
   position: relative;
 }
 
-.player-vp .vp-cards {
+#game .player-vp .vp-cards {
   width: 40px;
   height: 40px;
   background-image: url('img/resource-card-victory.png');
@@ -341,22 +341,22 @@
   background-position: center;
 }
 
-.player-vp .coin {
+#game .player-vp .coin {
   width: 40px;
   height: 40px;
 }
 
-.player .player-resources {
+#game .player .player-resources {
   margin-left: 10px;
 }
 
-.player-hand {
+#game .player-hand {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
 }
 
-.player-vp .score {
+#game .player-vp .score {
   position: absolute;
   bottom: -25px;
   color: black;
@@ -366,25 +366,25 @@
   font-size: 16pt;
 }
 
-.game-log {
+#game .game-log {
   margin: 5px;
   margin-top: 20px;
 }
 
-.game-log .title {
+#game .game-log .title {
   font-size: 16pt;
   font-weight: bold;
   margin-bottom: 10px;
 }
 
-.game-log .entries {
+#game .game-log .entries {
   overflow: auto;
   max-height: 300px;
   display: flex;
   flex-direction: column;
 }
 
-.game-log .entries .turn-entry {
+#game .game-log .entries .turn-entry {
   color: silver;
   font-size: 14pt;
   text-align: center;
@@ -395,47 +395,45 @@
   border-top: solid 1px silver;
 }
 
-.game-log .entries .turn-entry .turn {
+#game .game-log .entries .turn-entry .turn {
   font-weight: bold;
   font-size: 16pt;
 }
 
-.game-log .entries .entry {
+#game .game-log .entries .entry {
   font-size: 11pt;
   margin-bottom: 10px;
 }
 
-.game-log .entries .entry.vp {
+#game .game-log .entries .entry.vp {
   font-size: 12pt;
   color: gold;
 }
 
-.game-log .entries .entry .player-name {
+#game .game-log .entries .entry .player-name {
   font-weight: bold;
   font-size: 14pt;
   margin-right: 5px;
 }
 
-.game-log .entries .entry .player-name .action {}
-
-.end-game {
+#game .end-game {
   display: flex;
   justify-content: center;
 }
 
-.end-game .title {
+#game .end-game .title {
   font-size: 18pt;
   text-align: center;
   font-weight: bold;
   margin-bottom: 30px;
 }
 
-.end-game .end-game-container {
+#game .end-game .end-game-container {
   display: flex;
   flex-direction: column;
 }
 
-.end-game .player-score {
+#game .end-game .player-score {
   display: flex;
   flex-direction: row;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
@@ -446,34 +444,26 @@
   padding: 10px;
 }
 
-.end-game .player-score .name {
+#game .end-game .player-score .name {
   margin: 10px;
   font-size: 16pt;
   font-weight: bold;
   color: black;
 }
 
-.end-game .player-score .score {}
-
-.end-game .player-score .score .score-total {
+#game .end-game .player-score .score .score-total {
   font-size: 16pt;
   font-weight: bold;
   color: black;
   margin-bottom: 10px;
 }
 
-.end-game .player-score .score span {
+#game .end-game .player-score .score span {
   color: red;
   font-weight: bold;
 }
 
-.end-game .player-score .score .score-from-cards {}
-
-.end-game .player-score .score .score-from-coins {}
-
-.end-game .player-score .score .score-from-resources {}
-
-.end-game .player-score.winner {
+#game .end-game .player-score.winner {
   box-shadow: 0 4px 8px 0 rgba(255, 215, 0, 0.85);
   background-color: rgba(255, 215, 0, 0.85);
   transform: scale(1.15, 1.15);
@@ -526,12 +516,27 @@
   margin: 20px;
 }
 
-#upgrade-resources-order{
+#upgrade-resources-order {
   display: flex;
   flex-direction: row;
   justify-content: center;
   margin-bottom: 20px;
   width: 100%;
+}
+
+#game .home {
+  width: 48px;
+  height: 48px;
+  text-decoration: none;
+  position: fixed;
+  left: 10px;
+  top: 10px;
+  z-index: 100;
+}
+
+#game .home img {
+  border-radius: 25px;
+  border: solid 1px gold;
 }
 
 #game-info {
@@ -547,6 +552,7 @@
 #game-info a.rules {
   text-decoration: none;
 }
+
 #game-info a:visited.rules {
   text-decoration: none;
 }
