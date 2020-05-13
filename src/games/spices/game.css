@@ -13,6 +13,10 @@
   background-position: center;
 }
 
+#game .resource:hover {
+  cursor:pointer;
+}
+
 #game .resource.selected {
   border-spacing: 50px;
   border-radius: 10px;
@@ -76,6 +80,7 @@
 #game .card:hover {
   z-index: 20;
   transform: scale(1.15, 1.15);
+  cursor:pointer;
 }
 
 #game .card.inactive {
@@ -416,24 +421,44 @@
   margin-right: 5px;
 }
 
-#game .end-game {
+#end-game {
   display: flex;
   justify-content: center;
 }
 
-#game .end-game .title {
+#end-game .title {
   font-size: 18pt;
   text-align: center;
   font-weight: bold;
   margin-bottom: 30px;
 }
 
-#game .end-game .end-game-container {
+#end-game .home {
+  margin: auto;
+  padding: 10px;
+  min-width: 100px;
+  text-align: center;
+  vertical-align: middle;
+  color: white;
+  background-color: red;
+  font-size: 11pt;
+  border-radius: 8px;
+  opacity: 0.9;
+  cursor:pointer;
+}
+
+#end-game .end-game-content {
   display: flex;
   flex-direction: column;
 }
 
-#game .end-game .player-score {
+#end-game .end-game-content .logo {
+  width: 100%;
+  height: auto;
+  text-align:center;
+}
+
+#end-game .player-score {
   display: flex;
   flex-direction: row;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
@@ -444,26 +469,26 @@
   padding: 10px;
 }
 
-#game .end-game .player-score .name {
+#end-game .player-score .name {
   margin: 10px;
   font-size: 16pt;
   font-weight: bold;
   color: black;
 }
 
-#game .end-game .player-score .score .score-total {
+#end-game .player-score .score .score-total {
   font-size: 16pt;
   font-weight: bold;
   color: black;
   margin-bottom: 10px;
 }
 
-#game .end-game .player-score .score span {
+#end-game .player-score .score span {
   color: red;
   font-weight: bold;
 }
 
-#game .end-game .player-score.winner {
+#end-game .player-score.winner {
   box-shadow: 0 4px 8px 0 rgba(255, 215, 0, 0.85);
   background-color: rgba(255, 215, 0, 0.85);
   transform: scale(1.15, 1.15);
@@ -607,6 +632,7 @@
   padding: 8px;
   border-radius: 8px;
   opacity: 0.9;
+  cursor:pointer;
 }
 
 #action-bar .action-button:hover {

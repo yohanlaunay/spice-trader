@@ -519,11 +519,17 @@ function EndGameScoring(props) {
   }
 
   return (
-    <div className='end-game'>
+    <div id='end-game'>
       <div className='end-game-content'>
-        <div id='game-logo' />
+        <div className='logo'>
+          <img src={require('./img/box-art.png')} alt='game box' />
+        </div>
         <div className='title'>End Game Scoring</div>
         {scoresUi}
+        <button className='home'
+            title='Back to profile page'
+            onClick={()=>navigate('/')}
+            >Home</button>
       </div>
     </div>
   );
@@ -606,8 +612,11 @@ class SpiceTraderApp extends React.Component {
   }
 
   showTurnNotification(){
-    if (!("Notification" in window)) {
+    if (!("Notification" in window) || this.state.session == null) {
       return;
+    }
+    if(!!this.state.session.isLastTurn && this.state.session.game.activePlayerIndex === 0){
+      return; // don't show in end-game scenarios
     }
     Notification.requestPermission((result) => {
       if( result !== 'granted' ){
@@ -1034,8 +1043,10 @@ class SpiceTraderApp extends React.Component {
     const currentUser = this.context;
     if( !!this.state.loading ){
       return (
-        <div className='loading'>
-          Loading game...
+        <div id="game">
+          <div className='loading'>
+            Loading game...
+          </div>
         </div>
       );
     }
@@ -1046,7 +1057,7 @@ class SpiceTraderApp extends React.Component {
 
     if(!!this.state.session.isLastTurn && this.state.session.game.activePlayerIndex === 0){
       return (
-        <EndGameScoring players={this.state.session.game.players} />
+          <EndGameScoring players={this.state.session.game.players} />
       );
     }
     const error = this.state.error;
