@@ -13,10 +13,6 @@
   background-position: center;
 }
 
-#game .resource:hover {
-  cursor:pointer;
-}
-
 #game .resource.selected {
   border-spacing: 50px;
   border-radius: 10px;
