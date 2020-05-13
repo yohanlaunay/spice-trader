@@ -38,9 +38,9 @@ function Resource(props){
 }
 
 function Resources(props){
-  const resources = [];
+  const resourcesUi = [];
   for(let resource of props.value){
-      resources.push(
+      resourcesUi.push(
         <Resource
           value={resource.type}
           key={resource.uid}
@@ -51,7 +51,7 @@ function Resources(props){
       );
   }
   return (
-    <div className='resource-list'>{resources}</div>
+    <div className='resource-list'>{resourcesUi}</div>
   );
 }
 
@@ -887,6 +887,9 @@ class SpiceTraderApp extends React.Component {
     newState.session.currentAction = null;
     newState.session.selectedUids = {};
     newState.session.currentActionData = null;
+
+    // sort current player's resources
+    activePlayer.resources = SpiceTraderEngine.sortResources(activePlayer.resources);
 
     const game = newState.session.game;
     // check if the game is on it's last turn

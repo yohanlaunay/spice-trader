@@ -73,6 +73,22 @@ const transferAllCards = (deckFrom, deckTo) => {
   }
 };
 
+const sortResources = (resources) => {
+  const resByType = {};
+  for( const type of ResourceOrder ){
+    resByType[type] = []; // will contain the resources of that type
+  }
+  for( let i = 0 ; i < resources.length; i++ ){
+    const r = resources[i];
+    resByType[r.type].push(r);
+  }
+  let sortedResources = [];
+  for( const type of ResourceOrder ){
+    sortedResources = sortedResources.concat(resByType[type]);
+  }
+  return sortedResources;
+}
+
 const createResource = (type) => {
   return {
     type: type,
@@ -605,6 +621,7 @@ const SpiceTraderEngine = {
   copy: copy,
   guid: guid,
   createGameSession: createGameSession,
+  sortResources: sortResources,
   getPlayerScore: getPlayerScore,
   getActivePlayer: getActivePlayer,
   playerRests: playerRests,
