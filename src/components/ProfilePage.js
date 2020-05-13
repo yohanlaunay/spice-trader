@@ -3,6 +3,7 @@ import {navigate} from "@reach/router";
 import { UserContext } from "../providers/UserProvider";
 import {auth, firestore} from "../firebase";
 import Games from "../games/games.js";
+import './profile.css';
 
 const DEFAULT_GAME_TYPE = 'spicetrader'; // TODO(ylaunay)
 
@@ -27,9 +28,8 @@ const GameSession = (props) => {
     const playersUi = gameData.players.map(player => {
       return (
         <div className='confirmed-player' key={player.uid}>
-          <img alt='player' src={player.img} width='48px' height='48px' /><br />
-          Name: {player.name}<br />
-          Email: {player.email}
+          <img alt='player' src={player.img} width='48px' height='48px' title={player.email} />
+          <span>{player.name}</span>
         </div>
       );
     });
@@ -51,7 +51,7 @@ const GameSession = (props) => {
     // Join action
     if( !isConfirmedPlayer && gameData.players.length < gameInfo.maxPlayerCount ){
       actions.push(
-        <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full"
+        <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
           key='action-join'
           onClick={() => props.joinGame(gameId)}>Join</button>
       );
@@ -60,20 +60,20 @@ const GameSession = (props) => {
     if( isGameAdmin ){
       // Invite action
       actions.push(
-        <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full"
+        <button className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
           key='action-invite'
           onClick={()=>props.invitePlayer(gameId)}>Invite</button>
       );
       // Delete Game
       actions.push(
-        <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
+        <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
           key='action-delete'
           onClick={()=>props.deleteGame(gameId)}>Delete</button>
       );
       // If enough players can start
       if( gameData.players.length >= gameInfo.minPlayerCount && gameData.players.length <= gameInfo.maxPlayerCount ){
         actions.push(
-          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
+          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
             key='action-start'
             onClick={()=>props.startGame(gameId)}>Start</button>
         );
@@ -83,22 +83,22 @@ const GameSession = (props) => {
     return (
       <div className='game'>
         <div className='game-info'>
-          <h2>Game Information</h2>
-          Game Id: {gameId}<br />
-          Game Name: {gameInfo.name}<br />
-          Players Count: {gameInfo.minPlayerCount} - {gameInfo.maxPlayerCount}<br />
-          Duration: {gameInfo.duration}
+          <div className='game-name'>
+            <h1>{gameInfo.name}</h1>
+            <div className='game-actions'>
+              {actions}
+            </div>
+          </div>
+          <b>Players Count:</b> {gameInfo.minPlayerCount} - {gameInfo.maxPlayerCount}<br />
+          <b>Duration:</b> {gameInfo.duration}
         </div>
         <div className='game-players'>
-          <h3>Confirmed Players:</h3>
+          <h1>Players</h1>
           {playersUi}
         </div>
         <div className='game-guests'>
-          <h3>Invited Players:</h3>
+          <h1>Invited Players</h1>
           {invitedPlayers}
-        </div>
-        <div className='game-actions'>
-          {actions}
         </div>
       </div>
     );
@@ -107,10 +107,9 @@ const GameSession = (props) => {
   function renderStartedGame(){
     const playersUi = gameData.players.map(player => {
       return (
-        <div className='player' key={player.uid}>
-          <img alt='player' src={player.img} width='48px' height='48px' /><br />
-          Name: {player.name}<br />
-          Email: {player.email}
+        <div className='confirmed-player' key={player.uid}>
+          <img alt='player' src={player.img} width='48px' height='48px' title={player.email} /><br />
+          <span>{player.name}</span>
         </div>
       );
     });
@@ -121,7 +120,7 @@ const GameSession = (props) => {
     // Play action
     if( isConfirmedPlayer ){
       actions.push(
-        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full"
+        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
           key='action-play'
           onClick={() => props.playGame(gameId, gameData.gameType)}>Play</button>
       );
@@ -129,7 +128,7 @@ const GameSession = (props) => {
       if( isGameAdmin ){
         // Delete Game
         actions.push(
-          <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full"
+          <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
             key='action-delete'
             onClick={()=>props.deleteGame(gameId)}>Delete</button>
         );
@@ -138,18 +137,17 @@ const GameSession = (props) => {
     return (
       <div className='game'>
         <div className='game-info'>
-          <h2>Game Information</h2>
-          Game Id: {gameId}<br />
-          Game Name: {gameInfo.name}<br />
-          Players Count: {gameInfo.minPlayerCount} - {gameInfo.maxPlayerCount}<br />
-          Duration: {gameInfo.duration}
+          <div className='game-name'>
+            <h1>{gameInfo.name}</h1>
+            <div className='game-actions'>
+              {actions}
+            </div>
+          </div>
+          <b>Duration:</b> {gameInfo.duration}
         </div>
         <div className='game-players'>
-          <h3>Players:</h3>
+          <h1>Players</h1>
           {playersUi}
-        </div>
-        <div className='game-actions'>
-          {actions}
         </div>
       </div>
     );
@@ -194,7 +192,8 @@ const GameSessionList = (props) => {
 
   return (
     <div className='game-list'>
-      <button className="w-full py-3 bg-blue-600 mt-4 text-white"  onClick={() => props.createGame(selectedGameType)}>Create Game</button>
+      <button className="w-full py-3 bg-blue-500 hover:bg-blue-700 mt-4 text-white px-4 rounded"
+          onClick={() => props.createGame(selectedGameType)}>Create Game</button>
       {games}
     </div>
   );
@@ -371,7 +370,7 @@ class ProfilePage extends React.Component {
     const user = this.context;
     const {photoURL, displayName, email} = user;
     return (
-      <div>
+      <div id='profile-page'>
         <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet" />
         <div className="mx-auto w-11/12 md:w-2/4 py-8 px-4 md:px-8">
           <div className="flex border flex-col items-center md:flex-row md:items-start border-blue-400 px-3 py-4">
@@ -379,17 +378,18 @@ class ProfilePage extends React.Component {
               style={{
                 background: `url(${photoURL || 'https://res.cloudinary.com/dqcsk8rsc/image/upload/v1577268053/avatar-1-bitmoji_upgwhc.png'})  no-repeat center center`,
                 backgroundSize: "cover",
-                height: "200px",
-                width: "200px"
+                height: "100px",
+                width: "100px"
               }}
               className="border border-blue-300"
             ></div>
             <div className="md:pl-4">
             <h2 className="text-2xl font-semibold">{displayName}</h2>
             <h3 className="italic">{email}</h3>
+            <button className="bg-red-500 hover:bg-red-600 w-full py-2 text-white px-4 rounded"
+                  onClick={() => {auth.signOut()}}>Sign out</button>
             </div>
           </div>
-          <button className="w-full py-3 bg-red-600 mt-4 text-white" onClick = {() => {auth.signOut()}}>Sign out</button>
           <GameSessionList
             user={user}
             value={this.state.gameList}

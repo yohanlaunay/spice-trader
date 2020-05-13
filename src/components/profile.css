@@ -1,0 +1,76 @@
+#profile-page .game-list {
+  display: flex;
+  flex-direction: column;
+}
+
+#profile-page .game-list .game {
+  margin: 5px;
+  margin-top: 10px;
+  border: solid 1px silver;
+  border-radius: 5px;
+  padding: 0px;
+  padding: 4px;
+}
+
+#profile-page .game .game-info {
+}
+
+#profile-page .game .game-info .game-name {
+  display: flex;
+  flex-direction: row;
+  border-bottom: solid 1px silver;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+#profile-page .game .game-info .game-name h1 {
+  line-height: 40px;
+}
+
+#profile-page .game .game-actions {
+  margin-left: auto;
+}
+
+#profile-page .game h1 {
+  font-weight: bold;
+  font-size: 12pt;
+}
+
+#profile-page .game .game-players {
+  margin-bottom: 10px;
+}
+
+#profile-page .game .game-players h1 {
+  margin-bottom: 10px;
+}
+
+#profile-page .game .game-players img {
+  border-radius: 5px;
+  margin: 5px;
+}
+
+#profile-page .game .game-players span {
+  line-height: 52px;
+  font-size: 14pt;
+}
+
+#profile-page .game .game-guests h1 {
+  margin-bottom: 10px;
+}
+
+#profile-page .game .game-actions {
+  display: flex;
+  flex-direction: row;
+}
+
+#profile-page .game .game-actions > button {
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+
+#profile-page .confirmed-player {
+  display: flex;
+  flex-direction: row;
+}
