@@ -6,6 +6,17 @@ import Games from "../games/games.js";
 
 const DEFAULT_GAME_TYPE = 'spicetrader'; // TODO(ylaunay)
 
+const shuffleArray = (arr) => {
+  let temp = [...arr];
+  let shuffled = [];
+  for (let i = 0; i < arr.length; i++) {
+    let j = Math.floor(Math.random() * temp.length)
+    shuffled.push(temp[j]);
+    temp.splice(j, 1);
+  }
+  return shuffled;
+}
+
 const GameSession = (props) => {
   const gameId = props.gameId;
   const gameData = props.gameData;
@@ -322,7 +333,8 @@ class ProfilePage extends React.Component {
           throw new Error('Admin only');
         }
         const gameType = doc.data().gameType;
-        const gameSession = Games[gameType].createGameSession(doc.data().players);
+        const players = shuffleArray(doc.data().players);
+        const gameSession = Games[gameType].createGameSession(players);
         transaction.update(gameRef,{session: gameSession});
         return true;
       });
