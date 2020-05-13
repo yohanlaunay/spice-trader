@@ -78,6 +78,10 @@
   transform: scale(1.15, 1.15);
 }
 
+.card.inactive {
+  transform: scale(1, 1);
+}
+
 .card.selected {
   transform: scale(1.15, 1.15);
   -webkit-filter: grayscale(100%);

@@ -578,13 +578,57 @@ class SpiceTraderApp extends React.Component {
     this.onPlayerPass = this.onPlayerPass.bind(this);
     this.onPlayerRests = this.onPlayerRests.bind(this);
     this.dismissError = this.dismissError.bind(this);
+    this.showTurnNotification = this.showTurnNotification.bind(this);
+    this.dismissTurnNotification = this.dismissTurnNotification.bind(this);
+    this.onUserInteraction = this.onUserInteraction.bind(this);
 
     this.state = {
       loading: true,
       updating: false,
       error: null,
       session: null,
+      showTurnNotification: false,
+      shownNotification: null,
     }
+  }
+
+  dismissTurnNotification(){
+    if (!("Notification" in window)) {
+      return;
+    }
+    window.navigator.serviceWorker.ready.then((registration) => {
+        registration.getNotifications({tag: 'turn-notification'}).then(notifications => {
+          if( notifications.length > 0 ){
+            notifications[0].close();
+          }
+        });
+      });
+  }
+
+  showTurnNotification(){
+    if (!("Notification" in window)) {
+      return;
+    }
+    Notification.requestPermission((result) => {
+      if( result !== 'granted' ){
+        return;
+      }
+      window.navigator.serviceWorker.ready.then((registration) => {
+        setTimeout(() => {
+          registration.showNotification('Your Turn', {
+            body: "It's your turn on Spice Trader :)",
+            icon: require('./img/box-art.png'),
+            tag: 'turn-notification',
+          }).then(() => {
+            window.setTimeout(() => this.dismissTurnNotification(), 5000);
+          });
+        }, 100);
+      });
+    });
+  }
+
+  onUserInteraction(){
+    this.dismissTurnNotification();
   }
 
   isGameReadOnly(){
@@ -596,13 +640,27 @@ class SpiceTraderApp extends React.Component {
   }
 
   componentDidMount() {
+    const user = this.context;
+    if (!("Notification" in window)) {
+      console.log("This browser does not support desktop notification");
+    } else {
+      window.navigator.serviceWorker.register('/sw.js');
+      Notification.requestPermission();
+    }
     // Subscribe to game updates
     firestore.collection('games')
       .doc(this.props.gameId)
       .onSnapshot(doc => {
-        this.setState({
-          loading: false,
+
+        const activePlayer = SpiceTraderEngine.getActivePlayer(doc.data().session.game);
+        // if it's our turn and we haven't shown the notification show it.
+        if( activePlayer.uid === user.uid && "Notification" in window ){
+          this.showTurnNotification();
+        }
+
+        this.setState( {
           session: doc.data().session,
+          loading: false,
         });
       });
   }
@@ -671,6 +729,7 @@ class SpiceTraderApp extends React.Component {
   }
 
   onVictoryCardClicked(cardId){
+    this.onUserInteraction();
     if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
@@ -692,6 +751,7 @@ class SpiceTraderApp extends React.Component {
     this.endTurn(newState);
   }
   onResourceCardClicked(cardId){
+    this.onUserInteraction();
     if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
@@ -734,6 +794,7 @@ class SpiceTraderApp extends React.Component {
     }
   }
   onActivePlayerCardClicked(cardId){
+    this.onUserInteraction();
     if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
@@ -816,6 +877,7 @@ class SpiceTraderApp extends React.Component {
     }
   }
   onActivePlayerResourceClicked(resourceId){
+    this.onUserInteraction();
     if( this.isGameReadOnly() ){
       return; // prevent actions during updates
     }
@@ -889,6 +951,51 @@ class SpiceTraderApp extends React.Component {
     }
   }
 
+  onCancelPlayerAction(){
+    this.onUserInteraction();
+    if( this.isGameReadOnly() ){
+      return; // prevent actions during updates
+    }
+    const newState = this.copyState();
+    newState.session.currentAction = null;
+    newState.session.selectedUids = {};
+    this.updateState(newState);
+  }
+
+  onPlayerPass(state){
+    this.onUserInteraction();
+    if( this.isGameReadOnly() ){
+      return; // prevent actions during updates
+    }
+    if( state.session.currentAction === GameActions.SelectResourceUpgrade ){
+      const newState = this.copyState(state);
+      let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
+      console.log("No more upgrades, discard the card");
+      activePlayer = SpiceTraderEngine.playerDiscardCard(activePlayer, newState.session.currentActionData.cardId);
+      if (activePlayer === false) {
+        this.showError('Error discarding this card');
+        return;
+      }
+      newState.session.game.players[newState.session.game.activePlayerIndex] = activePlayer;
+      newState.session.history.push(this.createLog(newState, activePlayer, 'upgraded'));
+      this.endTurn(newState);
+      return;
+    }
+  }
+
+  onPlayerRests(){
+    this.onUserInteraction();
+    if( this.isGameReadOnly() ){
+      return; // prevent actions during updates
+    }
+    const newState = this.copyState();
+    let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
+    activePlayer = SpiceTraderEngine.playerRests(activePlayer);
+    newState.session.game.players[newState.session.game.activePlayerIndex] = activePlayer;
+    newState.session.history.push(this.createLog(newState, activePlayer, 'rested'));
+    this.endTurn(newState); // nothing async, end the action
+  }
+
   endTurn(state){
     if( this.isGameReadOnly() ){
       return; // prevent actions during updates
@@ -921,52 +1028,6 @@ class SpiceTraderApp extends React.Component {
       newState.session.turn++;
     }
     this.updateState(newState);
-  }
-
-  onCancelPlayerAction(){
-    if( this.isGameReadOnly() ){
-      return; // prevent actions during updates
-    }
-    const newState = this.copyState();
-    newState.session.currentAction = null;
-    newState.session.selectedUids = {};
-    this.updateState(newState);
-  }
-
-  onPlayerPass(state){
-    if( this.isGameReadOnly() ){
-      return; // prevent actions during updates
-    }
-    if( state.session.currentAction === GameActions.SelectResourceUpgrade ){
-      const newState = this.copyState(state);
-      let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
-      console.log("No more upgrades, discard the card");
-      activePlayer = SpiceTraderEngine.playerDiscardCard(activePlayer, newState.session.currentActionData.cardId);
-      if (activePlayer === false) {
-        this.showError('Error discarding this card');
-        return;
-      }
-      newState.session.game.players[newState.session.game.activePlayerIndex] = activePlayer;
-      newState.session.history.push(this.createLog(newState, activePlayer, 'upgraded'));
-      this.endTurn(newState);
-      return;
-    }
-  }
-
-  onPlayerRests(){
-    if( this.isGameReadOnly() ){
-      return; // prevent actions during updates
-    }
-    const newState = this.copyState();
-    let activePlayer = SpiceTraderEngine.getActivePlayer(newState.session.game);
-    activePlayer = SpiceTraderEngine.playerRests(activePlayer);
-    newState.session.game.players[newState.session.game.activePlayerIndex] = activePlayer;
-    newState.session.history.push(this.createLog(newState, activePlayer, 'rested'));
-    this.endTurn(newState); // nothing async, end the action
-  }
-
-  navigateToProfilePage(){
-    return navigate('/');
   }
 
   render() {
