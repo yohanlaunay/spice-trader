@@ -553,7 +553,7 @@ function GameLog(props){
     if( entry.isVpCard ){
       classNames.push('vp');
     }
-    entries[0].unshift(
+    entries[0].splice(1,0, 
       <div className={classNames.join(' ')} key={key}>
         <span className='player-name'>{entry.playerName}</span>
         <span className='action'>{entry.action}</span>
