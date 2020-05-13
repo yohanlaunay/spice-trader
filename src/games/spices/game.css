@@ -522,9 +522,18 @@
   margin: 20px;
 }
 
-#game-info {
-  text-align: center;
+#upgrade-resources-order{
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
   margin-bottom: 20px;
+  width: 100%;
+}
+
+#game-info {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }
 
 #game-info .logo {

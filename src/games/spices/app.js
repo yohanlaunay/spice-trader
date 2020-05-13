@@ -1013,6 +1013,16 @@ class SpiceTraderApp extends React.Component {
               <img className='logo' src={require('./img/box-art.png')} alt='game box' />
             </a>
           </div>
+          <div id='upgrade-resources-order'>
+            {ResourceOrder.map((type, index) => {
+              const className = "order-"+index;
+              return (
+                <div className={className} key={type}>
+                  <Resource value={type} />
+                </div>
+              )
+            })}
+          </div>
           <Players
             gameState={this.state}
             players={this.state.session.game.players}
