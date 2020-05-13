@@ -136,6 +136,9 @@ function ResourceCard(props) {
   if( isEntitySelected(props, card.uid) ){
     classNames.push('selected');
   }
+  if( props.inactive ){
+    classNames.push('inactive');
+  }
 
   function renderUpgradeCard(){
     let upgradeCubes = [];
@@ -148,6 +151,7 @@ function ResourceCard(props) {
         <div
           className={classNames.join(' ')}
           onClick={props.onClick}
+          title={props.title||'Upgrade Card'}
         >
           <div className='upgrade-container'>
             <div className='upgrade-arrow-top'></div>
@@ -166,6 +170,7 @@ function ResourceCard(props) {
         <div
           className={classNames.join(' ')}
           onClick={props.onClick}
+          title={props.title||'Trading Card'}
         >
           <div className='trading-container'>
             <div className='trading-arrow'>
@@ -187,6 +192,7 @@ function ResourceCard(props) {
         <div
           className={classNames.join(' ')}
           onClick={props.onClick}
+          title={props.title||'Production Card'}
         >
           <div className='production-container'>
             <div className='production-arrow'>
@@ -245,6 +251,7 @@ function ResourceCardSlots(props){
 
 function PlayerHand(props){
   const player = props.player;
+
   return (
     <div>
       <h2>Your Cards</h2>
@@ -254,6 +261,17 @@ function PlayerHand(props){
             gameState={props.gameState}
             key={card.uid}
             card={card}
+            inactive={false}
+            onClick={() => props.onCardClicked(card.uid)}
+          />
+        )}
+        {player.discardPile.map((card) =>
+          <ResourceCard
+            gameState={props.gameState}
+            key={card.uid}
+            card={card}
+            inactive={true}
+            title='Discarded, Rest to get all discarded cards back'
             onClick={() => props.onCardClicked(card.uid)}
           />
         )}

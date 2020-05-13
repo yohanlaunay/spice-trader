@@ -69,9 +69,13 @@
   background-size: contain;
 }
 
+.card.inactive {
+  opacity: 0.5;
+}
+
 .card:hover {
+  z-index:20;
   transform: scale(1.15, 1.15);
-  z-index:10;
 }
 
 .card.selected {
