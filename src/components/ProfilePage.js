@@ -143,10 +143,8 @@ const GameSession = (props) => {
               {actions}
             </div>
           </div>
-          <b>Duration:</b> {gameInfo.duration}
         </div>
         <div className='game-players'>
-          <h1>Players</h1>
           {playersUi}
         </div>
       </div>
@@ -306,6 +304,7 @@ class ProfilePage extends React.Component {
        guests: [user.email],
        admin: user.uid,
        gameType: gameType,
+       created: Date.now(),
        players: [{
          uid: user.uid,
          img: user.photoURL,
