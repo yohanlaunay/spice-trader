@@ -987,7 +987,14 @@ class SpiceTraderApp extends React.Component {
             {error !== null ? error.message:''}
         </div>
         <div id='panel'>
-          <div id='game-logo' onClick={()=>this.navigateToProfilePage()} />
+          <div id='game-info'>
+            <a className='rules'
+              href='https://www.fgbradleys.com/rules/rules5/Century-Spice_Road_EN_Rules.pdf'
+              title='Click for the rules'
+              target='_blank' rel="noopener noreferrer">
+              <img className='logo' src={require('./img/box-art.png')} alt='game box' />
+            </a>
+          </div>
           <Players
             gameState={this.state}
             players={this.state.session.game.players}

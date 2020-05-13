@@ -518,14 +518,20 @@
   margin: 20px;
 }
 
-#game-logo {
+#game-info {
+  text-align: center;
   margin-bottom: 20px;
-  width: 100%;
+}
+
+#game-info .logo {
   height: 200px;
-  background-image: url('img/box-art.png');
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center;
+}
+
+#game-info a.rules {
+  text-decoration: none;
+}
+#game-info a:visited.rules {
+  text-decoration: none;
 }
 
 #action-bar {
