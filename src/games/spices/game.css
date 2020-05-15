@@ -74,7 +74,7 @@ body {
   opacity: 0.5;
 }
 
-#game.active-player .card:hover {
+#game .card:hover {
   z-index: 20;
   transform: scale(1.15, 1.15);
   cursor:pointer;
