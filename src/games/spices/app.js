@@ -450,16 +450,8 @@ function ActionBar(props){
     lastTurnClassNames.push('inactive');
   }
 
-  const updatingClassNames = ['updating-server-message'];
-  if( props.gameState.updating === true ){
-    updatingClassNames.push('active');
-  }else{
-    updatingClassNames.push('inactive');
-  }
-
   return (
     <div id='action-bar'>
-      <div className={updatingClassNames.join(' ')}>Sending move to server...</div>
       <div className={lastTurnClassNames.join(' ')}>Last Turn</div>
       {renderActionContent()}
     </div>
@@ -553,7 +545,7 @@ function GameLog(props){
     if( entry.isVpCard ){
       classNames.push('vp');
     }
-    entries[0].splice(1,0, 
+    entries[0].splice(1,0,
       <div className={classNames.join(' ')} key={key}>
         <span className='player-name'>{entry.playerName}</span>
         <span className='action'>{entry.action}</span>
@@ -1082,6 +1074,9 @@ class SpiceTraderApp extends React.Component {
             className='dismiss'
             onClick={()=>this.dismissError()}>&times;</span>
             {error !== null ? error.message:''}
+        </div>
+        <div id='updating-server-message' className={!!this.state.updating?'active':'inactive'}>
+          Sending move to server...
         </div>
         <div id='panel'>
           <a href='/' className='home' title='Back to profile page'>
