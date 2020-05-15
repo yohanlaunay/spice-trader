@@ -434,6 +434,21 @@ body {
   margin-bottom: 30px;
 }
 
+#end-game .restart {
+  margin: auto;
+  margin-bottom: 10px;
+  padding: 10px;
+  min-width: 100px;
+  text-align: center;
+  vertical-align: middle;
+  color: white;
+  background-color: #008CBA;
+  font-size: 12pt;
+  border-radius: 8px;
+  opacity: 0.9;
+  cursor:pointer;
+}
+
 #end-game .home {
   margin: auto;
   padding: 10px;
@@ -442,7 +457,7 @@ body {
   vertical-align: middle;
   color: white;
   background-color: red;
-  font-size: 11pt;
+  font-size: 12pt;
   border-radius: 8px;
   opacity: 0.9;
   cursor:pointer;

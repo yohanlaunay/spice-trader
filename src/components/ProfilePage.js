@@ -5,7 +5,7 @@ import {auth, firestore} from "../firebase";
 import Games from "../games/games.js";
 import './profile.css';
 
-const DEFAULT_GAME_TYPE = 'spicetrader'; // TODO(ylaunay)
+const DEFAULT_GAME_TYPE = 'spicetrader'; // TODO
 
 const shuffleArray = (arr) => {
   let temp = [...arr];
@@ -119,13 +119,22 @@ const GameSession = (props) => {
     const isConfirmedPlayer = gameData.players.find(p => p.uid === user.uid);
     // Play action
     if( isConfirmedPlayer ){
-      actions.push(
-        <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-          key='action-play'
-          onClick={() => props.playGame(gameId, gameData.gameType)}>Play</button>
-      );
+      if( ! gameData.session.completed ){
+        actions.push(
+          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            key='action-play'
+            onClick={() => props.playGame(gameId, gameData.gameType)}>Play</button>
+        );
+      }
       // [Admin only]
       if( isGameAdmin ){
+        if( gameData.session.completed === true ){
+          actions.push(
+            <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+              key='action-start'
+              onClick={() => props.startGame(gameId)}>Restart</button>
+          );
+        }
         // Delete Game
         actions.push(
           <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"

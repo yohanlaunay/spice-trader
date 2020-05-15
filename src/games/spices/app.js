@@ -518,6 +518,10 @@ function EndGameScoring(props) {
         </div>
         <div className='title'>End Game Scoring</div>
         {scoresUi}
+        <button className='restart'
+            title='Restart'
+            onClick={props.restart}
+            >Restart</button>
         <button className='home'
             title='Back to profile page'
             onClick={()=>navigate('/')}
@@ -579,15 +583,21 @@ class SpiceTraderApp extends React.Component {
     this.showTurnNotification = this.showTurnNotification.bind(this);
     this.dismissTurnNotification = this.dismissTurnNotification.bind(this);
     this.onUserInteraction = this.onUserInteraction.bind(this);
+    this.restartGame = this.restartGame.bind(this);
+    this.newState = this.newState.bind(this);
 
-    this.state = {
+    this.state = this.newState();
+  }
+
+  newState(){
+    return {
       loading: true,
       updating: false,
       error: null,
       session: null,
       showTurnNotification: false,
       shownNotification: null,
-    }
+    };
   }
 
   dismissTurnNotification(){
@@ -664,6 +674,26 @@ class SpiceTraderApp extends React.Component {
           loading: false,
         });
       });
+  }
+
+  restartGame(){
+    const gameRef = firestore.collection('games').doc(this.props.gameId);
+    firestore.runTransaction(transaction => {
+      return transaction.get(gameRef).then(doc => {
+        if( ! doc.exists ){
+          throw new Error('Game deleted');
+        }
+        const session = SpiceTraderEngine.createGameSession(doc.data().players);
+        transaction.update(gameRef,{session: session});
+        return session;
+      });
+    }).then(session => {
+      const newState = this.newState();
+      newState.session = session;
+      this.setState(newState);
+    }).catch(error => {
+      alert('Error restarting game, please try again.');
+    });
   }
 
   updateState(newState, sessionWasNotUpdated=false){
@@ -1027,6 +1057,9 @@ class SpiceTraderApp extends React.Component {
     // increase turn count when it's first player's turn again
     if( game.activePlayerIndex === 0 ){
       newState.session.turn++;
+      if( newState.session.isLastTurn ){
+        newState.session.completed = true;
+      }
     }
     this.updateState(newState);
   }
@@ -1049,7 +1082,10 @@ class SpiceTraderApp extends React.Component {
 
     if(!!this.state.session.isLastTurn && this.state.session.game.activePlayerIndex === 0){
       return (
-          <EndGameScoring players={this.state.session.game.players} />
+          <EndGameScoring
+            players={this.state.session.game.players}
+            restart={()=>this.restartGame()}
+          />
       );
     }
     const error = this.state.error;

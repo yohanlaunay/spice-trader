@@ -606,6 +606,7 @@ const getPlayerScore = (player) => {
 const createGameSession = (players) => {
   return {
     game: createGame(players),
+    completed: false,
     turn: 0,
     isLastTurn: false,
     history: [],

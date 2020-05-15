@@ -23,7 +23,8 @@ export const MinPlayerCount = 2;
 export const MaxPlayerCount = 5;
 export const PlayerMaxResources = 10;
 export const PlayerMaxVictoryCards = (numPlayers) => {
-  return (numPlayers === 2 || numPlayers === 3) ? 6 : 5;
+  return 1; // TODO
+  // return (numPlayers === 2 || numPlayers === 3) ? 6 : 5;
 };
 export const ResourceCardsLineUpSize = 6;
 export const VictoryCardsLineUpSize = 5;
@@ -78,7 +79,7 @@ export const ResourcesCardsData = {};
 ResourcesCardsData[CardType.Trading] = [
   'RY>B', 'G>RRY', 'B>RRR', 'GG>BB', 'YYYYY>GGG', 'YYYY>GB',
   'RRR>GGYY', 'GG>BRR', 'RR>BYY', 'BB>GGRRR', 'RRR>BB', 'G>RR',
-  'GG>RRRYY', 'YYYYY>BB', 'B>GYYY', 'R>YYY', 'GYY>BB', 'GYY>BB',
+  'GG>RRRYY', 'YYYYY>BB', 'B>GYYY', 'R>YYY', 'GYY>BB',
   'GG>BRYY', 'RR>GYYY', 'YYY>RRR', 'B>RRYY', 'GGG>BBB', 'B>GRY',
   'YYYY>GG', 'YYY>RG', 'RRR>GGG', 'RR>GG', 'BB>GGGRY', 'YY>G',
   'RRR>BGY', 'YY>RR', 'G>RYYYY', 'YYY>B', 'B>GG',
