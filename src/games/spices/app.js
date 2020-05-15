@@ -665,7 +665,9 @@ class SpiceTraderApp extends React.Component {
 
         const activePlayer = SpiceTraderEngine.getActivePlayer(doc.data().session.game);
         // if it's our turn and we haven't shown the notification show it.
-        if( activePlayer.uid === user.uid && "Notification" in window ){
+        if( activePlayer.uid === user.uid
+          && doc.data().session.currentAction === null
+          && "Notification" in window ){
           this.showTurnNotification();
         }
 
