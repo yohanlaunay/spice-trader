@@ -23,8 +23,7 @@ export const MinPlayerCount = 2;
 export const MaxPlayerCount = 5;
 export const PlayerMaxResources = 10;
 export const PlayerMaxVictoryCards = (numPlayers) => {
-  return 1; // TODO
-  // return (numPlayers === 2 || numPlayers === 3) ? 6 : 5;
+  return (numPlayers === 2 || numPlayers === 3) ? 6 : 5;
 };
 export const ResourceCardsLineUpSize = 6;
 export const VictoryCardsLineUpSize = 5;
