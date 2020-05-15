@@ -1068,8 +1068,15 @@ class SpiceTraderApp extends React.Component {
     // Always show the current player's play
     let currentUserPlayer = this.state.session.game.players.find(p=>p.uid === currentUser.uid);
 
+    // Check if current player is the active player, if so add appropriate class name to the root div.
+    const activePlayer = SpiceTraderEngine.getActivePlayer(this.state.session.game);
+    let rootGameClassName = 'not-active-player'
+    if(currentUser.uid === activePlayer.uid){
+      rootGameClassName = 'active-player'
+    }
+
     return (
-      <div id="game">
+      <div id="game" className={rootGameClassName}>
         <div id='error' className={error !== null?'active':'inactive'}>
           <span
             className='dismiss'
